@@ -11,6 +11,7 @@ WORKDIR /build
 # Cache Maven wrapper and dependencies
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
+RUN chmod +x ./mvnw
 RUN ./mvnw dependency:go-offline -B
 
 # Copy source code and build production jar
