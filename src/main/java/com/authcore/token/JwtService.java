@@ -75,6 +75,14 @@ public class JwtService {
         return extractAllClaims(token).get("username", String.class);
     }
 
+    public String extractJti(String token) {
+        return extractAllClaims(token).getId();
+    }
+
+    public Date extractExpiration(String token) {
+        return extractAllClaims(token).getExpiration();
+    }
+
     @SuppressWarnings("unchecked")
     public List<String> extractRoles(String token) {
         return extractAllClaims(token).get("roles", List.class);

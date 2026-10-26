@@ -11,10 +11,12 @@ import com.authcore.exception.AccountSuspendedException;
 import com.authcore.exception.DuplicateResourceException;
 import com.authcore.exception.InvalidCredentialsException;
 import com.authcore.exception.ResourceNotFoundException;
+import com.authcore.ratelimit.RateLimitService;
 import com.authcore.role.entity.Role;
 import com.authcore.role.repository.RoleRepository;
 import com.authcore.token.JwtService;
 import com.authcore.token.RefreshTokenService;
+import com.authcore.token.TokenBlacklistService;
 import com.authcore.user.entity.PasswordHistory;
 import com.authcore.user.entity.User;
 import com.authcore.user.repository.PasswordHistoryRepository;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.UUID;
 
 @Service
@@ -37,6 +40,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final AuditService auditService;
+    private final RateLimitService rateLimitService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthService(
         UserRepository userRepository,
@@ -45,7 +50,9 @@ public class AuthService {
         PasswordEncoder passwordEncoder,
         JwtService jwtService,
         RefreshTokenService refreshTokenService,
-        AuditService auditService
+        AuditService auditService,
+        RateLimitService rateLimitService,
+        TokenBlacklistService tokenBlacklistService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -54,6 +61,8 @@ public class AuthService {
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.auditService = auditService;
+        this.rateLimitService = rateLimitService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Transactional
@@ -93,11 +102,17 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
+        String clientIp = AuditService.extractClientIp(httpRequest);
+        rateLimitService.checkIpRateLimit(clientIp);
+
         User user = userRepository.findByEmailIgnoreCase(request.email().trim())
             .orElseThrow(() -> {
                 auditService.logSecurityAction(null, "LOGIN_FAILED", httpRequest, "{\"email\":\"" + request.email() + "\",\"reason\":\"USER_NOT_FOUND\"}");
                 return new InvalidCredentialsException("Invalid email or password");
             });
+
+        // BR-22: Check account lock
+        rateLimitService.checkAccountLock(user.getId());
 
         if (user.isSuspended()) {
             auditService.logSecurityAction(user.getId(), "LOGIN_BLOCKED", httpRequest, "{\"reason\":\"ACCOUNT_SUSPENDED\"}");
@@ -111,11 +126,15 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             auditService.logSecurityAction(user.getId(), "LOGIN_FAILED", httpRequest, "{\"reason\":\"BAD_CREDENTIALS\"}");
+            rateLimitService.recordFailedLogin(user.getId());
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
+        // Reset failed login counter on success
+        rateLimitService.resetFailedLogins(user.getId());
+
         String deviceInfo = httpRequest != null ? httpRequest.getHeader("User-Agent") : "Unknown";
-        String ipAddress = AuditService.extractClientIp(httpRequest);
+        String ipAddress = clientIp;
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = refreshTokenService.createRefreshToken(user, deviceInfo, ipAddress);
@@ -144,16 +163,45 @@ public class AuthService {
 
     @Transactional
     public void logout(String refreshToken, HttpServletRequest httpRequest) {
+        String authHeader = httpRequest != null ? httpRequest.getHeader("Authorization") : null;
+        logout(refreshToken, authHeader, httpRequest);
+    }
+
+    @Transactional
+    public void logout(String refreshToken, String authHeader, HttpServletRequest httpRequest) {
         if (refreshToken != null && !refreshToken.isBlank()) {
             refreshTokenService.revokeToken(refreshToken);
         }
+        blacklistBearerToken(authHeader);
         auditService.logSecurityAction(null, "LOGOUT", httpRequest, null);
     }
 
     @Transactional
     public void logoutAll(UUID userId, HttpServletRequest httpRequest) {
+        String authHeader = httpRequest != null ? httpRequest.getHeader("Authorization") : null;
+        logoutAll(userId, authHeader, httpRequest);
+    }
+
+    @Transactional
+    public void logoutAll(UUID userId, String authHeader, HttpServletRequest httpRequest) {
         refreshTokenService.revokeAllUserTokens(userId);
+        blacklistBearerToken(authHeader);
         auditService.logSecurityAction(userId, "LOGOUT_ALL", httpRequest, null);
+    }
+
+    private void blacklistBearerToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                String jti = jwtService.extractJti(token);
+                Date expiry = jwtService.extractExpiration(token);
+                if (jti != null && expiry != null) {
+                    long remainingSeconds = Math.max(0, (expiry.getTime() - System.currentTimeMillis()) / 1000);
+                    tokenBlacklistService.blacklistToken(jti, remainingSeconds);
+                }
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     @Transactional(readOnly = true)

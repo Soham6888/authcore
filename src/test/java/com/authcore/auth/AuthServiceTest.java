@@ -6,13 +6,17 @@ import com.authcore.auth.dto.LoginRequest;
 import com.authcore.auth.dto.RegisterRequest;
 import com.authcore.auth.dto.UserSummaryResponse;
 import com.authcore.auth.service.AuthService;
+import com.authcore.exception.AccountLockedException;
 import com.authcore.exception.AccountSuspendedException;
 import com.authcore.exception.DuplicateResourceException;
 import com.authcore.exception.InvalidCredentialsException;
+import com.authcore.exception.RateLimitExceededException;
+import com.authcore.ratelimit.RateLimitService;
 import com.authcore.role.entity.Role;
 import com.authcore.role.repository.RoleRepository;
 import com.authcore.token.JwtService;
 import com.authcore.token.RefreshTokenService;
+import com.authcore.token.TokenBlacklistService;
 import com.authcore.user.entity.User;
 import com.authcore.user.entity.UserStatus;
 import com.authcore.user.repository.PasswordHistoryRepository;
@@ -33,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,6 +58,10 @@ class AuthServiceTest {
     private RefreshTokenService refreshTokenService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private RateLimitService rateLimitService;
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
 
     private AuthService authService;
 
@@ -65,7 +74,9 @@ class AuthServiceTest {
             passwordEncoder,
             jwtService,
             refreshTokenService,
-            auditService
+            auditService,
+            rateLimitService,
+            tokenBlacklistService
         );
     }
 
@@ -127,15 +138,41 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Login with incorrect password throws InvalidCredentialsException")
+    @DisplayName("Login with incorrect password throws InvalidCredentialsException and records failed attempt")
     void login_BadPassword_ThrowsException() {
         LoginRequest request = new LoginRequest("soham@example.com", "WrongPassword123!");
         User user = new User("soham_dev", "soham@example.com", "encoded-hash", "Soham", "Patil");
+        user.setId(UUID.randomUUID());
 
         when(userRepository.findByEmailIgnoreCase("soham@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("WrongPassword123!", "encoded-hash")).thenReturn(false);
 
         assertThrows(InvalidCredentialsException.class, () -> authService.login(request, null));
+        verify(rateLimitService).recordFailedLogin(user.getId());
+    }
+
+    @Test
+    @DisplayName("Login when IP rate limit is exceeded throws RateLimitExceededException")
+    void login_IpRateLimitExceeded_ThrowsException() {
+        LoginRequest request = new LoginRequest("soham@example.com", "SecureP@ss123");
+        doThrow(new RateLimitExceededException("Too many login attempts from this IP address."))
+            .when(rateLimitService).checkIpRateLimit(any());
+
+        assertThrows(RateLimitExceededException.class, () -> authService.login(request, null));
+    }
+
+    @Test
+    @DisplayName("Login when account is locked throws AccountLockedException")
+    void login_AccountLocked_ThrowsException() {
+        LoginRequest request = new LoginRequest("soham@example.com", "SecureP@ss123");
+        User user = new User("soham_dev", "soham@example.com", "encoded-hash", "Soham", "Patil");
+        user.setId(UUID.randomUUID());
+
+        when(userRepository.findByEmailIgnoreCase("soham@example.com")).thenReturn(Optional.of(user));
+        doThrow(new AccountLockedException("Account is temporarily locked."))
+            .when(rateLimitService).checkAccountLock(user.getId());
+
+        assertThrows(AccountLockedException.class, () -> authService.login(request, null));
     }
 
     @Test
@@ -143,6 +180,7 @@ class AuthServiceTest {
     void login_SuspendedUser_ThrowsException() {
         LoginRequest request = new LoginRequest("soham@example.com", "SecureP@ss123");
         User user = new User("soham_dev", "soham@example.com", "encoded-hash", "Soham", "Patil");
+        user.setId(UUID.randomUUID());
         user.setStatus(UserStatus.SUSPENDED);
 
         when(userRepository.findByEmailIgnoreCase("soham@example.com")).thenReturn(Optional.of(user));

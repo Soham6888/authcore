@@ -1,6 +1,7 @@
 package com.authcore.config;
 
 import com.authcore.token.JwtService;
+import com.authcore.token.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,9 +23,11 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, TokenBlacklistService tokenBlacklistService) {
         this.jwtService = jwtService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -42,6 +45,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String jwt = authHeader.substring(7);
         if (jwtService.isTokenValid(jwt) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            String jti = jwtService.extractJti(jwt);
+            if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             UUID userId = jwtService.extractUserId(jwt);
             List<String> roles = jwtService.extractRoles(jwt);
             List<String> permissions = jwtService.extractPermissions(jwt);
