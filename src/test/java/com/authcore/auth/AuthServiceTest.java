@@ -2,14 +2,18 @@ package com.authcore.auth;
 
 import com.authcore.audit.AuditService;
 import com.authcore.auth.dto.AuthResponse;
+import com.authcore.auth.dto.ChangePasswordRequest;
+import com.authcore.auth.dto.ForgotPasswordRequest;
 import com.authcore.auth.dto.LoginRequest;
 import com.authcore.auth.dto.RegisterRequest;
+import com.authcore.auth.dto.ResetPasswordRequest;
 import com.authcore.auth.dto.UserSummaryResponse;
 import com.authcore.auth.service.AuthService;
 import com.authcore.exception.AccountLockedException;
 import com.authcore.exception.AccountSuspendedException;
 import com.authcore.exception.DuplicateResourceException;
 import com.authcore.exception.InvalidCredentialsException;
+import com.authcore.exception.InvalidPasswordException;
 import com.authcore.exception.RateLimitExceededException;
 import com.authcore.ratelimit.RateLimitService;
 import com.authcore.role.entity.Role;
@@ -17,6 +21,9 @@ import com.authcore.role.repository.RoleRepository;
 import com.authcore.token.JwtService;
 import com.authcore.token.RefreshTokenService;
 import com.authcore.token.TokenBlacklistService;
+import com.authcore.token.entity.PasswordResetToken;
+import com.authcore.token.repository.PasswordResetTokenRepository;
+import com.authcore.user.entity.PasswordHistory;
 import com.authcore.user.entity.User;
 import com.authcore.user.entity.UserStatus;
 import com.authcore.user.repository.PasswordHistoryRepository;
@@ -29,6 +36,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,6 +61,8 @@ class AuthServiceTest {
     @Mock
     private PasswordHistoryRepository passwordHistoryRepository;
     @Mock
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+    @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtService jwtService;
@@ -71,6 +83,7 @@ class AuthServiceTest {
             userRepository,
             roleRepository,
             passwordHistoryRepository,
+            passwordResetTokenRepository,
             passwordEncoder,
             jwtService,
             refreshTokenService,
@@ -186,5 +199,61 @@ class AuthServiceTest {
         when(userRepository.findByEmailIgnoreCase("soham@example.com")).thenReturn(Optional.of(user));
 
         assertThrows(AccountSuspendedException.class, () -> authService.login(request, null));
+    }
+
+    @Test
+    @DisplayName("ForgotPassword generates reset token when user exists")
+    void forgotPassword_UserExists_GeneratesToken() {
+        ForgotPasswordRequest request = new ForgotPasswordRequest("soham@example.com");
+        User user = new User("soham_dev", "soham@example.com", "hash", "Soham", "Patil");
+        user.setId(UUID.randomUUID());
+
+        when(userRepository.findByEmailIgnoreCase("soham@example.com")).thenReturn(Optional.of(user));
+        when(refreshTokenService.hashToken(anyString())).thenReturn("hashed-reset-token");
+
+        String token = authService.forgotPassword(request, null);
+
+        assertNotNull(token);
+        verify(passwordResetTokenRepository).save(any(PasswordResetToken.class));
+    }
+
+    @Test
+    @DisplayName("ResetPassword rejects if new password matches one of last 5 passwords (BR-09)")
+    void resetPassword_ReusesOldPassword_ThrowsInvalidPasswordException() {
+        ResetPasswordRequest request = new ResetPasswordRequest("valid-token", "NewSecure@Pass123");
+        User user = new User("soham_dev", "soham@example.com", "hash", "Soham", "Patil");
+        user.setId(UUID.randomUUID());
+
+        PasswordResetToken resetToken = new PasswordResetToken(user, "hashed-token", Instant.now().plusSeconds(900));
+
+        when(refreshTokenService.hashToken("valid-token")).thenReturn("hashed-token");
+        when(passwordResetTokenRepository.findByTokenHash("hashed-token")).thenReturn(Optional.of(resetToken));
+
+        PasswordHistory oldHistory = new PasswordHistory(user, "old-hash-1");
+        when(passwordHistoryRepository.findTop5ByUserIdOrderByCreatedAtDesc(user.getId()))
+            .thenReturn(List.of(oldHistory));
+        when(passwordEncoder.matches("NewSecure@Pass123", "old-hash-1")).thenReturn(true);
+
+        assertThrows(InvalidPasswordException.class, () -> authService.resetPassword(request, null));
+    }
+
+    @Test
+    @DisplayName("ChangePassword succeeds when current password is valid and new password not in history")
+    void changePassword_Success() {
+        UUID userId = UUID.randomUUID();
+        ChangePasswordRequest request = new ChangePasswordRequest("OldPassword@123", "BrandNew@Pass123");
+        User user = new User("soham_dev", "soham@example.com", "old-encoded-hash", "Soham", "Patil");
+        user.setId(userId);
+
+        when(userRepository.findByIdAndDeletedAtIsNull(userId)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("OldPassword@123", "old-encoded-hash")).thenReturn(true);
+        when(passwordHistoryRepository.findTop5ByUserIdOrderByCreatedAtDesc(userId))
+            .thenReturn(Collections.emptyList());
+        when(passwordEncoder.encode("BrandNew@Pass123")).thenReturn("new-encoded-hash");
+
+        authService.changePassword(userId, request, null);
+
+        assertEquals("new-encoded-hash", user.getPasswordHash());
+        verify(passwordHistoryRepository).save(any(PasswordHistory.class));
     }
 }

@@ -115,6 +115,34 @@ public class RateLimitService {
     }
 
     /**
+     * Reset IP rate limit counter. Useful for administrative operations or test isolation.
+     */
+    public void resetIpRateLimit(String ip) {
+        if (ip == null || ip.isBlank()) {
+            return;
+        }
+
+        String key = IP_LOGIN_PREFIX + ip;
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.delete(key);
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Redis delete failed for IP rate limit key {}: {}", key, e.getMessage());
+        }
+
+        fallbackStore.remove(key);
+    }
+
+    /**
+     * Clear all fallback rate limits.
+     */
+    public void clearAllLimits() {
+        fallbackStore.clear();
+    }
+
+    /**
      * BR-24: Password reset requests are rate-limited to 3 per email per hour.
      */
     public void checkPasswordResetRateLimit(String email) {

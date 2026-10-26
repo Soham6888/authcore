@@ -2,14 +2,19 @@ package com.authcore.auth.service;
 
 import com.authcore.audit.AuditService;
 import com.authcore.auth.dto.AuthResponse;
+import com.authcore.auth.dto.ChangePasswordRequest;
+import com.authcore.auth.dto.ForgotPasswordRequest;
 import com.authcore.auth.dto.LoginRequest;
 import com.authcore.auth.dto.RefreshTokenRequest;
 import com.authcore.auth.dto.RegisterRequest;
+import com.authcore.auth.dto.ResetPasswordRequest;
 import com.authcore.auth.dto.UserSummaryResponse;
 import com.authcore.common.PasswordValidator;
 import com.authcore.exception.AccountSuspendedException;
 import com.authcore.exception.DuplicateResourceException;
 import com.authcore.exception.InvalidCredentialsException;
+import com.authcore.exception.InvalidPasswordException;
+import com.authcore.exception.InvalidTokenException;
 import com.authcore.exception.ResourceNotFoundException;
 import com.authcore.ratelimit.RateLimitService;
 import com.authcore.role.entity.Role;
@@ -17,6 +22,8 @@ import com.authcore.role.repository.RoleRepository;
 import com.authcore.token.JwtService;
 import com.authcore.token.RefreshTokenService;
 import com.authcore.token.TokenBlacklistService;
+import com.authcore.token.entity.PasswordResetToken;
+import com.authcore.token.repository.PasswordResetTokenRepository;
 import com.authcore.user.entity.PasswordHistory;
 import com.authcore.user.entity.User;
 import com.authcore.user.repository.PasswordHistoryRepository;
@@ -26,8 +33,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,6 +47,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordHistoryRepository passwordHistoryRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -47,6 +59,7 @@ public class AuthService {
         UserRepository userRepository,
         RoleRepository roleRepository,
         PasswordHistoryRepository passwordHistoryRepository,
+        PasswordResetTokenRepository passwordResetTokenRepository,
         PasswordEncoder passwordEncoder,
         JwtService jwtService,
         RefreshTokenService refreshTokenService,
@@ -57,6 +70,7 @@ public class AuthService {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordHistoryRepository = passwordHistoryRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
@@ -209,5 +223,91 @@ public class AuthService {
         User user = userRepository.findByIdAndDeletedAtIsNull(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return UserSummaryResponse.from(user);
+    }
+
+    @Transactional
+    public String forgotPassword(ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+        rateLimitService.checkPasswordResetRateLimit(request.email());
+
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(request.email().trim());
+        if (userOpt.isEmpty()) {
+            auditService.logSecurityAction(null, "PASSWORD_RESET_REQUESTED", httpRequest, "{\"email\":\"" + request.email() + "\",\"found\":false}");
+            return null;
+        }
+
+        User user = userOpt.get();
+        String rawToken = UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
+        String tokenHash = refreshTokenService.hashToken(rawToken);
+        Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
+
+        PasswordResetToken resetToken = new PasswordResetToken(user, tokenHash, expiresAt);
+        passwordResetTokenRepository.save(resetToken);
+
+        auditService.logSecurityAction(user.getId(), "PASSWORD_RESET_REQUESTED", httpRequest, "{\"email\":\"" + user.getEmail() + "\"}");
+        return rawToken;
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request, HttpServletRequest httpRequest) {
+        PasswordValidator.validate(request.newPassword());
+
+        String tokenHash = refreshTokenService.hashToken(request.token().trim());
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
+            .orElseThrow(() -> new InvalidTokenException("Invalid or expired password reset token"));
+
+        if (!resetToken.isValid()) {
+            throw new InvalidTokenException("Invalid or expired password reset token");
+        }
+
+        User user = resetToken.getUser();
+
+        // BR-09: Password history check (cannot reuse last 5 passwords)
+        List<PasswordHistory> historyList = passwordHistoryRepository.findTop5ByUserIdOrderByCreatedAtDesc(user.getId());
+        for (PasswordHistory history : historyList) {
+            if (passwordEncoder.matches(request.newPassword(), history.getPasswordHash())) {
+                throw new InvalidPasswordException("New password cannot be one of your last 5 passwords");
+            }
+        }
+
+        String encodedNewPassword = passwordEncoder.encode(request.newPassword());
+        user.setPasswordHash(encodedNewPassword);
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        resetToken.setUsedAt(Instant.now());
+        passwordResetTokenRepository.save(resetToken);
+
+        passwordHistoryRepository.save(new PasswordHistory(user, encodedNewPassword));
+        refreshTokenService.revokeAllUserTokens(user.getId());
+
+        auditService.logSecurityAction(user.getId(), "PASSWORD_RESET_SUCCESS", httpRequest, null);
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, ChangePasswordRequest request, HttpServletRequest httpRequest) {
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            auditService.logSecurityAction(userId, "PASSWORD_CHANGE_FAILED", httpRequest, "{\"reason\":\"INVALID_CURRENT_PASSWORD\"}");
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+
+        PasswordValidator.validate(request.newPassword());
+
+        // BR-09: Password history check
+        List<PasswordHistory> historyList = passwordHistoryRepository.findTop5ByUserIdOrderByCreatedAtDesc(userId);
+        for (PasswordHistory history : historyList) {
+            if (passwordEncoder.matches(request.newPassword(), history.getPasswordHash())) {
+                throw new InvalidPasswordException("New password cannot be one of your last 5 passwords");
+            }
+        }
+
+        String encodedNewPassword = passwordEncoder.encode(request.newPassword());
+        user.setPasswordHash(encodedNewPassword);
+        userRepository.save(user);
+
+        passwordHistoryRepository.save(new PasswordHistory(user, encodedNewPassword));
+        auditService.logSecurityAction(userId, "PASSWORD_CHANGED", httpRequest, null);
     }
 }

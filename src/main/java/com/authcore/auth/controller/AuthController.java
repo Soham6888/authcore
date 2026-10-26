@@ -1,9 +1,12 @@
 package com.authcore.auth.controller;
 
 import com.authcore.auth.dto.AuthResponse;
+import com.authcore.auth.dto.ChangePasswordRequest;
+import com.authcore.auth.dto.ForgotPasswordRequest;
 import com.authcore.auth.dto.LoginRequest;
 import com.authcore.auth.dto.RefreshTokenRequest;
 import com.authcore.auth.dto.RegisterRequest;
+import com.authcore.auth.dto.ResetPasswordRequest;
 import com.authcore.auth.dto.UserSummaryResponse;
 import com.authcore.auth.service.AuthService;
 import com.authcore.common.ApiResponse;
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -84,5 +89,38 @@ public class AuthController {
     ) {
         UserSummaryResponse response = authService.getCurrentUser(userId);
         return ResponseEntity.ok(ApiResponse.success("Profile fetched successfully", response));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Map<String, String>>> forgotPassword(
+        @Valid @RequestBody ForgotPasswordRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        String token = authService.forgotPassword(request, httpRequest);
+        Map<String, String> data = new HashMap<>();
+        data.put("message", "If this email is registered, instructions to reset your password have been sent.");
+        if (token != null) {
+            data.put("resetToken", token);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Password reset request processed", data));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+        @Valid @RequestBody ResetPasswordRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        authService.resetPassword(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully. Please login with your new password.", null));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+        @AuthenticationPrincipal UUID userId,
+        @Valid @RequestBody ChangePasswordRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        authService.changePassword(userId, request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 }
