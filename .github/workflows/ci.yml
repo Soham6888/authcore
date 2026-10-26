@@ -1,0 +1,97 @@
+name: AuthCore CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: authcore_db
+          POSTGRES_USER: authcore_user
+          POSTGRES_PASSWORD: authcore_secret_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Grant Execute Permission for Maven Wrapper
+        run: chmod +x mvnw
+
+      - name: Build and Run Tests with Coverage
+        run: ./mvnw clean verify -B
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/authcore_db
+          DB_USERNAME: authcore_user
+          DB_PASSWORD: authcore_secret_password
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+      - name: Upload JaCoCo Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: target/site/jacoco/
+          retention-days: 14
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-results
+          path: target/surefire-reports/
+          retention-days: 14
+
+  docker-build:
+    name: Docker Image Build Verification
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: authcore:latest
