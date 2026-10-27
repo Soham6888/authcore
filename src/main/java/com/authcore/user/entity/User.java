@@ -84,7 +84,7 @@ public class User {
     }
 
     @PrePersist
-    protected void onCreate() {
+    public void onCreate() {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
@@ -92,7 +92,7 @@ public class User {
     }
 
     @PreUpdate
-    protected void onUpdate() {
+    public void onUpdate() {
         updatedAt = Instant.now();
     }
 

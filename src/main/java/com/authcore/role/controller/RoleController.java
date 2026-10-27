@@ -33,14 +33,14 @@ public class RoleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('roles:read')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasAuthority('roles:read')")
     public ResponseEntity<ApiResponse<List<RoleResponse>>> listRoles() {
         List<RoleResponse> response = roleService.getAllRoles();
         return ResponseEntity.ok(ApiResponse.success("Roles retrieved successfully", response));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('roles:read')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasAuthority('roles:read')")
     public ResponseEntity<ApiResponse<RoleResponse>> getRoleById(@PathVariable UUID id) {
         RoleResponse response = roleService.getRoleById(id);
         return ResponseEntity.ok(ApiResponse.success("Role retrieved successfully", response));

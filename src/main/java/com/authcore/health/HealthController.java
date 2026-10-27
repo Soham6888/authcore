@@ -4,6 +4,7 @@ import com.authcore.common.ApiResponse;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,6 +43,23 @@ public class HealthController {
         return ResponseEntity
             .status(allUp ? 200 : 503)
             .body(ApiResponse.success(message, details));
+    }
+
+    @GetMapping("/detailed")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getDetailedHealth() {
+        Map<String, Object> details = new HashMap<>();
+        boolean dbHealthy = checkDatabase();
+        boolean redisHealthy = checkRedis();
+
+        details.put("database", dbHealthy ? "UP" : "DOWN");
+        details.put("redis", redisHealthy ? "UP" : "DOWN");
+        details.put("jvmMemoryFreeBytes", Runtime.getRuntime().freeMemory());
+        details.put("jvmMemoryTotalBytes", Runtime.getRuntime().totalMemory());
+        details.put("availableProcessors", Runtime.getRuntime().availableProcessors());
+        details.put("timestamp", Instant.now().toString());
+
+        return ResponseEntity.ok(ApiResponse.success("Detailed health metrics", details));
     }
 
     private boolean checkDatabase() {

@@ -5,6 +5,7 @@ import com.authcore.exception.ApiException;
 import com.authcore.exception.DuplicateResourceException;
 import com.authcore.role.dto.CreateRoleRequest;
 import com.authcore.role.dto.RoleResponse;
+import com.authcore.role.dto.UpdateRoleRequest;
 import com.authcore.role.entity.Role;
 import com.authcore.role.repository.PermissionRepository;
 import com.authcore.role.repository.RoleRepository;
@@ -140,5 +141,70 @@ class RoleServiceTest {
         ApiException ex = assertThrows(ApiException.class,
             () -> roleService.removeRoleFromUser(userId, roleId, true, null));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+    }
+
+    @Test
+    @DisplayName("getAllRoles returns all available roles")
+    void getAllRoles_Success() {
+        Role role = new Role("USER", "User role", true);
+        when(roleRepository.findAll()).thenReturn(List.of(role));
+
+        List<RoleResponse> roles = roleService.getAllRoles();
+
+        assertEquals(1, roles.size());
+        assertEquals("USER", roles.get(0).name());
+    }
+
+    @Test
+    @DisplayName("getRoleById returns role when found")
+    void getRoleById_Success() {
+        UUID roleId = UUID.randomUUID();
+        Role role = new Role("MODERATOR", "Mod", true);
+        role.setId(roleId);
+
+        when(roleRepository.findById(roleId)).thenReturn(Optional.of(role));
+
+        RoleResponse response = roleService.getRoleById(roleId);
+        assertEquals("MODERATOR", response.name());
+    }
+
+    @Test
+    @DisplayName("updateRole updates description and permissions")
+    void updateRole_Success() {
+        UUID roleId = UUID.randomUUID();
+        Role role = new Role("MODERATOR", "Old Mod", false);
+        role.setId(roleId);
+
+        when(roleRepository.findById(roleId)).thenReturn(Optional.of(role));
+        when(roleRepository.save(any(Role.class))).thenAnswer(i -> i.getArgument(0));
+
+        UpdateRoleRequest request = new UpdateRoleRequest("New Mod Description", Set.of("users:read"));
+        RoleResponse response = roleService.updateRole(roleId, request, null);
+
+        assertEquals("New Mod Description", response.description());
+    }
+
+    @Test
+    @DisplayName("removeRoleFromUser removes role when user has multiple roles")
+    void removeRoleFromUser_Success() {
+        UUID userId = UUID.randomUUID();
+        UUID roleId = UUID.randomUUID();
+        User user = new User("testuser", "test@example.com", "hash", "Test", "User");
+        user.setId(userId);
+
+        Role role1 = new Role("USER", "User", true);
+        role1.setId(roleId);
+        Role role2 = new Role("MODERATOR", "Mod", false);
+        role2.setId(UUID.randomUUID());
+        user.setRoles(new HashSet<>(Set.of(role1, role2)));
+
+        when(userRepository.findByIdAndDeletedAtIsNull(userId)).thenReturn(Optional.of(user));
+        when(roleRepository.findById(roleId)).thenReturn(Optional.of(role1));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        UserDetailResponse response = roleService.removeRoleFromUser(userId, roleId, true, null);
+
+        assertNotNull(response);
+        assertEquals(1, user.getRoles().size());
     }
 }

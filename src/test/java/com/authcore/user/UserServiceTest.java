@@ -178,4 +178,44 @@ class UserServiceTest {
         verify(refreshTokenRepository).save(token);
         verify(auditService).logSecurityAction(eq(userId), eq("SESSION_REVOKED"), any(), any());
     }
+
+    @Test
+    @DisplayName("getUsers returns paginated list of users")
+    void getUsers_ReturnsPaginatedUsers() {
+        User user = new User("testuser", "test@example.com", "hash", "Test", "User");
+        user.setId(UUID.randomUUID());
+        Page<User> page = new PageImpl<>(List.of(user), PageRequest.of(0, 10), 1);
+
+        when(userRepository.searchUsers(any(), any(), any(), any())).thenReturn(page);
+
+        PageResponse<UserDetailResponse> response = userService.getUsers(null, null, null, PageRequest.of(0, 10));
+
+        assertEquals(1, response.content().size());
+        assertEquals("testuser", response.content().get(0).username());
+    }
+
+    @Test
+    @DisplayName("getUserAuditLogs returns paginated audit entries")
+    void getUserAuditLogs_Success() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.existsById(userId)).thenReturn(true);
+
+        com.authcore.audit.entity.AuditLog log = new com.authcore.audit.entity.AuditLog(userId, "LOGIN_SUCCESS", "127.0.0.1", "Agent", null);
+        Page<com.authcore.audit.entity.AuditLog> page = new PageImpl<>(List.of(log), PageRequest.of(0, 10), 1);
+        when(auditLogRepository.findByUserIdOrderByCreatedAtDesc(eq(userId), any())).thenReturn(page);
+
+        PageResponse<com.authcore.audit.dto.AuditLogResponse> response = userService.getUserAuditLogs(userId, PageRequest.of(0, 10));
+
+        assertEquals(1, response.content().size());
+        assertEquals("LOGIN_SUCCESS", response.content().get(0).action());
+    }
+
+    @Test
+    @DisplayName("getUserAuditLogs throws ResourceNotFoundException if user does not exist")
+    void getUserAuditLogs_UserNotFound() {
+        UUID userId = UUID.randomUUID();
+        when(userRepository.existsById(userId)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> userService.getUserAuditLogs(userId, PageRequest.of(0, 10)));
+    }
 }

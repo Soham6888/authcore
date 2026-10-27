@@ -46,7 +46,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('users:read')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasAuthority('users:read')")
     public ResponseEntity<ApiResponse<PageResponse<UserDetailResponse>>> listUsers(
         @RequestParam(required = false) UserStatus status,
         @RequestParam(required = false) String role,
@@ -98,7 +98,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('users:status')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasAuthority('users:status')")
     public ResponseEntity<ApiResponse<UserDetailResponse>> updateUserStatus(
         @PathVariable UUID id,
         @Valid @RequestBody UpdateUserStatusRequest request,
@@ -131,7 +131,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/audit-logs")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('audit:read')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasAuthority('audit:read')")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getUserAuditLogs(
         @PathVariable UUID id,
         @RequestParam(defaultValue = "0") int page,
@@ -143,7 +143,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/roles")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('users:write')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasAuthority('users:write')")
     public ResponseEntity<ApiResponse<UserDetailResponse>> assignRoleToUser(
         @PathVariable UUID id,
         @Valid @RequestBody AssignRoleRequest request,
@@ -157,7 +157,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}/roles/{roleId}")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('users:write')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasAuthority('users:write')")
     public ResponseEntity<ApiResponse<UserDetailResponse>> removeRoleFromUser(
         @PathVariable UUID id,
         @PathVariable UUID roleId,
