@@ -33,6 +33,30 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: authcore-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/authcore_db
+      DB_USERNAME: authcore_user
+      DB_PASSWORD: authcore_secret_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      JWT_ACCESS_EXPIRY_SECONDS: 900
+      JWT_REFRESH_EXPIRY_SECONDS: 604800
+      APP_BASE_URL: http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:
