@@ -4,6 +4,8 @@ import com.authcore.audit.repository.AuditLogRepository;
 import com.authcore.auth.dto.LoginRequest;
 import com.authcore.auth.dto.RefreshTokenRequest;
 import com.authcore.auth.dto.RegisterRequest;
+import com.authcore.ratelimit.RateLimitService;
+import com.authcore.token.repository.PasswordResetTokenRepository;
 import com.authcore.token.repository.RefreshTokenRepository;
 import com.authcore.user.repository.PasswordHistoryRepository;
 import com.authcore.user.repository.UserRepository;
@@ -40,10 +42,16 @@ class AuthIntegrationTest {
     private PasswordHistoryRepository passwordHistoryRepository;
 
     @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private AuditLogRepository auditLogRepository;
+
+    @Autowired
+    private RateLimitService rateLimitService;
 
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
     private MockMvc mockMvc;
@@ -53,6 +61,8 @@ class AuthIntegrationTest {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
             .apply(springSecurity())
             .build();
+        rateLimitService.clearAllLimits();
+        passwordResetTokenRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         passwordHistoryRepository.deleteAll();
         auditLogRepository.deleteAll();
