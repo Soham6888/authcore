@@ -37,11 +37,12 @@ public class HealthController {
         details.put("redis", redisHealthy ? "UP" : "DOWN");
         details.put("timestamp", Instant.now().toString());
 
-        boolean allUp = dbHealthy && redisHealthy;
-        String message = allUp ? "All systems operational" : "Degraded system state";
+        // Redis is optional (fallback to in-memory). Only DB health gates the status.
+        String message = dbHealthy ? "All systems operational" : "Degraded system state - Database unavailable";
+        details.put("redisNote", redisHealthy ? null : "Redis unavailable - using in-memory fallback");
 
         return ResponseEntity
-            .status(allUp ? 200 : 503)
+            .status(dbHealthy ? 200 : 503)
             .body(ApiResponse.success(message, details));
     }
 
