@@ -43,6 +43,20 @@ server:
     include-message: always
     include-binding-errors: always
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    try-it-out-enabled: true
+    persist-authorization: true
+    doc-expansion: list
+    filter: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    custom-css: /swagger-custom.css
+  api-docs:
+    path: /v3/api-docs
+
 authcore:
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}

@@ -19,32 +19,75 @@ public class OpenApiConfig {
 
         return new OpenAPI()
             .info(new Info()
-                .title("AuthCore API")
+                .title("AuthCore API — Interactive Testing Console")
                 .description("""
-                    ## Production-Grade Authentication & User Management API
+                    ### 🎯 Welcome to the AuthCore Interactive API Console!
                     
-                    **AuthCore** is a fully-featured authentication system built with Spring Boot 4, PostgreSQL, Redis, and JWT.
+                    > 💡 **New to Swagger?** Check out the [**Interactive 1-Click Guide & Playground**](/guide.html) for automatic 1-click token copying and live tutorials!
                     
-                    ### Features
-                    - 🔐 JWT Authentication (Access + Refresh token rotation)
-                    - 👥 Full User Management with pagination & filtering
-                    - 🛡️ Role-Based Access Control (RBAC) with permissions
-                    - 🔒 Rate Limiting (IP-based + Account-based)
-                    - 📋 Append-only Audit Logs
-                    - 🔑 Password History Enforcement (last 5 passwords)
-                    - 📧 Password Reset via email token
+                    ---
                     
-                    ### Quick Start
-                    1. **Register** a user via `POST /api/v1/auth/register`
-                    2. **Login** via `POST /api/v1/auth/login` to get your `accessToken`
-                    3. Click **Authorize** 🔓 above and paste: `<your accessToken>`
-                    4. Explore all protected endpoints!
+                    ### 📋 3-Step Quickstart to Test Any Endpoint
                     
-                    ### Default Dev Accounts
-                    | Role | Email | Password |
-                    |------|-------|----------|
-                    | Super Admin | superadmin@authcore.io | AdminPassword123! |
-                    | User | john.doe@example.com | Password123! |
+                    #### 1️⃣ Step 1: Get Your Token (Login)
+                    Scroll down to the **Authentication** section below:
+                    1. Click on **`POST /api/v1/auth/login`**.
+                    2. In the **Request body**, the credentials for Super Admin are ready:
+                    ```json
+                    {
+                      "email": "superadmin@authcore.io",
+                      "password": "AdminPassword123!"
+                    }
+                    ```
+                    3. Click the blue **Execute** button.
+                    4. In the response below, copy the long text inside `"accessToken": "..."` (do **not** include the quotation marks).
+                    
+                    ---
+                    
+                    #### 2️⃣ Step 2: Unlock Swagger (Authorize)
+                    1. Scroll up and click the glowing green **`Authorize 🔓`** button on the right.
+                    2. In the **Value:** field, paste your `accessToken`.
+                    3. Click **Authorize**, then click **Close**.
+                    4. 🎉 **Done!** All lock icons are now closed **🔒** — you have unrestricted access.
+                    
+                    ---
+                    
+                    #### 3️⃣ Step 3: Test Role Management & User Endpoints
+                    Now you can test any protected endpoint:
+                    
+                    * **Create a Role (`POST /api/v1/roles`):**
+                    ```json
+                    {
+                      "name": "SECURITY_AUDITOR",
+                      "description": "Compliance and audit log review officer",
+                      "permissions": ["audit:read", "users:read", "sessions:read"]
+                    }
+                    ```
+                    * **Assign Role to John Doe (`POST /api/v1/users/{id}/roles`):**
+                      * Set `id` to: `ededffff-5b88-4a95-8e12-72f5b6ff8085`
+                      * Set body to:
+                    ```json
+                    {
+                      "roleName": "SECURITY_AUDITOR"
+                    }
+                    ```
+                    * **List All Users (`GET /api/v1/users`):**
+                      * Click **Execute** to see all users with pagination!
+                    
+                    ---
+                    
+                    ### 👥 Pre-Seeded Development Accounts
+                    | Role | Email | Password | Privileges |
+                    |:---|:---|:---|:---|
+                    | **Super Admin** | `superadmin@authcore.io` | `AdminPassword123!` | Complete unrestricted platform access |
+                    | **Standard User** | `john.doe@example.com` | `Password123!` | Standard application user |
+                    
+                    ---
+                    
+                    ### ⚠️ Common Error Codes
+                    * **`401 Unauthorized`**: You haven't pasted your token in the green **Authorize 🔓** button yet, or token expired (tokens last 15 min).
+                    * **`403 Forbidden`**: The action requires `SUPER_ADMIN` privileges (make sure you logged in as `superadmin@authcore.io`).
+                    * **`429 Too Many Requests`**: Rate limit reached (>5 attempts/15 min). Wait a minute or test another endpoint.
                     """)
                 .version("1.0.0")
                 .contact(new Contact()

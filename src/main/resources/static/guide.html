@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuthCore — Interactive Swagger & API Testing Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --code-bg: #0b1120;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(16, 185, 129, 0.15));
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .badge {
+            display: inline-block;
+            background: #4f46e5;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #a5b4fc, #6ee7b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.lead {
+            color: var(--text-muted);
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto 24px auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        .btn-success:hover {
+            background: var(--success-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+        }
+        .btn-outline:hover {
+            background: var(--card-border);
+        }
+
+        /* 1-Click Token Generator Card */
+        .generator-card {
+            background: linear-gradient(135deg, #1e1b4b, #0f172a);
+            border: 2px solid #6366f1;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 40px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .generator-card h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+            color: #c7d2fe;
+        }
+
+        .token-display {
+            background: var(--code-bg);
+            border: 1px dashed #4f46e5;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 16px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #818cf8;
+            word-break: break-all;
+            max-height: 120px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .status-msg {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
+        /* Step Cards */
+        .step-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .step-card:hover {
+            border-color: #64748b;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .step-num {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .step-desc {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+
+        /* Code & Previews */
+        .code-box {
+            background: var(--code-bg);
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #e2e8f0;
+            overflow-x: auto;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #334155;
+            color: #cbd5e1;
+            border: none;
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background: #475569;
+            color: white;
+        }
+
+        .endpoint-badge {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .badge-post { background: #166534; color: #86efac; }
+        .badge-get { background: #1e40af; color: #93c5fd; }
+        .badge-patch { background: #854d0e; color: #fde047; }
+        .badge-delete { background: #991b1b; color: #fca5a5; }
+
+        /* Visual Callout */
+        .callout {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 14px 18px;
+            border-radius: 0 10px 10px 0;
+            margin: 16px 0;
+            font-size: 14px;
+            color: #a7f3d0;
+        }
+
+        .callout-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            color: #fde68a;
+        }
+
+        /* Accounts Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+        th {
+            background: #0f172a;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+        .nav-links a {
+            color: #818cf8;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <span class="badge">Beginner Walkthrough</span>
+        <h1>Mastering AuthCore in Swagger UI</h1>
+        <p class="lead">Follow this 4-step interactive guide to login, authorize, and test role management and user APIs directly in your browser without guesswork.</p>
+        <div class="hero-actions">
+            <a href="/swagger-ui/index.html" class="btn btn-primary" target="_blank">
+                🚀 Open Swagger UI
+            </a>
+            <button onclick="scrollToSteps()" class="btn btn-outline">
+                📖 View Step-by-Step Guide
+            </button>
+        </div>
+    </header>
+
+    <!-- ⚡ Quick 1-Click Authenticator -->
+    <div class="generator-card">
+        <h2>⚡ 1-Click Super Admin Login</h2>
+        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 16px;">
+            Click the button below to automatically authenticate against the live API, copy your JWT access token to your clipboard, and get ready for Swagger.
+        </p>
+        <button id="authBtn" onclick="oneClickLogin()" class="btn btn-success">
+            🔑 Generate & Copy Super Admin Token
+        </button>
+        <div id="statusMsg" class="status-msg"></div>
+        <div id="tokenDisplay" class="token-display"></div>
+        <div id="nextStepAction" style="display: none; margin-top: 16px;">
+            <a href="/swagger-ui/index.html" target="_blank" class="btn btn-primary">
+                👉 Now Open Swagger UI & Click "Authorize 🔓"
+            </a>
+        </div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step-card" id="step-1">
+        <div class="step-header">
+            <div class="step-num">1</div>
+            <div>
+                <div class="step-title">Understand the Green "Authorize 🔓" Button</div>
+                <div style="font-size: 13px; color: var(--text-muted);">The key to unlocking protected endpoints</div>
+            </div>
+        </div>
+        <p class="step-desc">
+            Most endpoints in AuthCore (like creating roles or managing users) are protected by JWT Bearer authentication. When you first open Swagger UI, trying to call them directly will return <strong>401 Unauthorized</strong> or <strong>403 Forbidden</strong>.
+        </p>
+        <div class="callout">
+            <strong>How to Authorize:</strong><br>
+            1. Look at the <strong>top right</strong> of Swagger UI for the green <strong>"Authorize 🔓"</strong> button.<br>
+            2. Click it — a modal pops up asking for <code>Value:</code>.<br>
+            3. Paste your <strong>accessToken</strong> (just the token, no quotes, no "Bearer " prefix).<br>
+            4. Click <strong>Authorize</strong>, then click <strong>Close</strong>.<br>
+            5. The padlock icon will change to locked <strong>🔒</strong>. You are now fully authenticated!
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-card" id="step-2">
+        <div class="step-header">
+            <div class="step-num">2</div>
+            <div>
+                <div class="step-title">Login Manually via Swagger (Alternative)</div>
+                <div style="font-size: 13px; color: var(--text-muted);">If you prefer doing it manually inside Swagger</div>
+            </div>
+        </div>
+        <p class="step-desc">
+            Inside Swagger, expand the <strong>Authentication</strong> section and locate <code>POST /api/v1/auth/login</code>.
+        </p>
+        <ol style="margin-left: 20px; color: var(--text-muted); font-size: 14px; margin-bottom: 12px;">
+            <li>Click anywhere on the blue bar for <code>POST /api/v1/auth/login</code> to open it.</li>
+            <li>In the <strong>Request body</strong> text area, paste this payload:</li>
+        </ol>
+        <div class="code-box">
+            <button class="copy-btn" onclick="copySnippet('loginJson')">Copy JSON</button>
+            <pre id="loginJson">{
+  "email": "superadmin@authcore.io",
+  "password": "AdminPassword123!"
+}</pre>
+        </div>
+        <ol start="3" style="margin-left: 20px; color: var(--text-muted); font-size: 14px;">
+            <li>Click the blue <strong>Execute</strong> button.</li>
+            <li>Look right below under <strong>Server response (200)</strong>.</li>
+            <li>Highlight and copy the long string inside <code>"accessToken": "..."</code>.</li>
+            <li>Scroll up to the top and paste it into the green <strong>Authorize 🔓</strong> button!</li>
+        </ol>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-card" id="step-3">
+        <div class="step-header">
+            <div class="step-num">3</div>
+            <div>
+                <div class="step-title">Test Creating a Role (Role Management)</div>
+                <div style="font-size: 13px; color: var(--text-muted);">POST /api/v1/roles</div>
+            </div>
+        </div>
+        <p class="step-desc">
+            Now that you are authorized, let's create a custom role with specific permissions:
+        </p>
+        <div class="code-box">
+            <button class="copy-btn" onclick="copySnippet('createRoleJson')">Copy JSON</button>
+            <pre id="createRoleJson">{
+  "name": "COMPLIANCE_MANAGER",
+  "description": "Responsible for privacy and audit inspections",
+  "permissions": [
+    "audit:read",
+    "users:read",
+    "sessions:read"
+  ]
+}</pre>
+        </div>
+        <div class="callout">
+            <strong>Execution:</strong> Click on <span class="endpoint-badge badge-post">POST</span> <code>/api/v1/roles</code> &rarr; Paste the JSON above into Request body &rarr; Click <strong>Execute</strong>.<br>
+            Expected Response: <strong>201 Created</strong> with the created role details and generated UUID!
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step-card" id="step-4">
+        <div class="step-header">
+            <div class="step-num">4</div>
+            <div>
+                <div class="step-title">Test Assigning a Role to a User</div>
+                <div style="font-size: 13px; color: var(--text-muted);">POST /api/v1/users/{id}/roles</div>
+            </div>
+        </div>
+        <p class="step-desc">
+            Assign the newly created role to the pre-seeded user <strong>John Doe</strong>:
+        </p>
+        <table style="margin-bottom: 16px;">
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td><code>id</code> (Path Parameter)</td>
+                <td><code>ededffff-5b88-4a95-8e12-72f5b6ff8085</code></td>
+            </tr>
+        </table>
+        <div class="code-box">
+            <button class="copy-btn" onclick="copySnippet('assignRoleJson')">Copy JSON</button>
+            <pre id="assignRoleJson">{
+  "roleName": "COMPLIANCE_MANAGER"
+}</pre>
+        </div>
+        <div class="callout">
+            <strong>Execution:</strong> In the <strong>User Management</strong> section &rarr; Click <span class="endpoint-badge badge-post">POST</span> <code>/api/v1/users/{id}/roles</code> &rarr; Type John's UUID in the <code>id</code> box &rarr; Paste the JSON body &rarr; Click <strong>Execute</strong>.<br>
+            Expected Response: <strong>200 OK</strong> showing John Doe now has both <code>USER</code> and <code>COMPLIANCE_MANAGER</code> roles!
+        </div>
+    </div>
+
+    <!-- Troubleshooting -->
+    <div class="step-card">
+        <div class="step-header">
+            <div class="step-num" style="background: #f59e0b;">?</div>
+            <div>
+                <div class="step-title">Troubleshooting & Error Codes</div>
+                <div style="font-size: 13px; color: var(--text-muted);">What to do if something goes wrong</div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Status Code</th>
+                    <th>Meaning</th>
+                    <th>How to Fix</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>401 Unauthorized</strong></td>
+                    <td>Missing or expired token</td>
+                    <td>Click the green <strong>Authorize 🔓</strong> button at the top and paste a fresh token from <code>/login</code>. (Tokens expire after 15 minutes).</td>
+                </tr>
+                <tr>
+                    <td><strong>403 Forbidden</strong></td>
+                    <td>Insufficient permissions</td>
+                    <td>Ensure you are logged in with <code>superadmin@authcore.io</code>. Standard users cannot create or assign roles.</td>
+                </tr>
+                <tr>
+                    <td><strong>409 Conflict</strong></td>
+                    <td>Duplicate resource</td>
+                    <td>A role or user with this exact name/email already exists. Pick a different name.</td>
+                </tr>
+                <tr>
+                    <td><strong>429 Too Many Requests</strong></td>
+                    <td>Rate limit hit (BR-21)</td>
+                    <td>Max 5 login attempts per 15 minutes from the same IP. Wait a couple of minutes or use a different client.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="nav-links">
+        <a href="/swagger-ui/index.html" target="_blank">🚀 Open Swagger UI</a>
+        <a href="/api/v1/health" target="_blank">🩺 Health Status</a>
+        <a href="https://github.com/Soham6888/authcore" target="_blank">💻 GitHub Repository</a>
+    </div>
+</div>
+
+<script>
+    async function oneClickLogin() {
+        const btn = document.getElementById('authBtn');
+        const status = document.getElementById('statusMsg');
+        const display = document.getElementById('tokenDisplay');
+        const nextAction = document.getElementById('nextStepAction');
+
+        btn.disabled = true;
+        status.style.color = '#94a3b8';
+        status.innerText = 'Logging in as superadmin@authcore.io...';
+
+        try {
+            const res = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: 'superadmin@authcore.io',
+                    password: 'AdminPassword123!'
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.data && data.data.accessToken) {
+                const token = data.data.accessToken;
+                
+                // Copy to clipboard
+                await navigator.clipboard.writeText(token);
+                
+                status.style.color = '#34d399';
+                status.innerHTML = '🎉 <strong>Success! Token copied to your clipboard!</strong>';
+                
+                display.style.display = 'block';
+                display.innerText = token;
+                
+                nextAction.style.display = 'block';
+            } else {
+                status.style.color = '#f87171';
+                status.innerText = 'Login failed: ' + (data.message || 'Unknown error');
+            }
+        } catch (err) {
+            status.style.color = '#f87171';
+            status.innerText = 'Network error: ' + err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function copySnippet(elementId) {
+        const text = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(text);
+        event.target.innerText = 'Copied!';
+        setTimeout(() => {
+            event.target.innerText = 'Copy JSON';
+        }, 2000);
+    }
+
+    function scrollToSteps() {
+        document.getElementById('step-1').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>

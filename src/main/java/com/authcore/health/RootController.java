@@ -10,4 +10,9 @@ public class RootController {
     public String root() {
         return "redirect:/swagger-ui/index.html";
     }
+
+    @GetMapping("/guide")
+    public String guide() {
+        return "redirect:/guide.html";
+    }
 }

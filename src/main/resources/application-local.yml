@@ -25,9 +25,13 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     try-it-out-enabled: true
+    persist-authorization: true
+    doc-expansion: list
+    filter: true
     operations-sorter: method
     tags-sorter: alpha
     display-request-duration: true
+    custom-css: /swagger-custom.css
   api-docs:
     path: /v3/api-docs
 
