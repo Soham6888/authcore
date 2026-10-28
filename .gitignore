@@ -38,3 +38,7 @@ build/
 data/
 *.mv.db
 *.trace.db
+
+### Frontend dependencies ###
+frontend/node_modules/
+frontend/dist/

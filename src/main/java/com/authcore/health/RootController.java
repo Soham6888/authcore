@@ -8,6 +8,11 @@ public class RootController {
 
     @GetMapping("/")
     public String root() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/docs")
+    public String docs() {
         return "redirect:/swagger-ui/index.html";
     }
 
