@@ -187,7 +187,17 @@ export const authApi = {
     }),
 
   getHealth: () =>
-    apiRequest('/health')
+    apiRequest('/health'),
+
+  getDetailedHealth: () =>
+    apiRequest('/health/detailed')
+};
+
+export const maintenanceApi = {
+  triggerMaintenance: () =>
+    apiRequest('/admin/maintenance/trigger', {
+      method: 'POST'
+    })
 };
 
 export const usersApi = {

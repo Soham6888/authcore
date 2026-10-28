@@ -7,6 +7,7 @@ import { UsersPage } from './pages/UsersPage';
 import { RolesPage } from './pages/RolesPage';
 import { AuditPage } from './pages/AuditPage';
 import { HealthPage } from './pages/HealthPage';
+import { AccountPage } from './pages/AccountPage';
 import { Shield, ExternalLink, User } from 'lucide-react';
 
 function AuthenticatedApp() {
@@ -57,7 +58,7 @@ function AuthenticatedApp() {
             <span>Console</span>
             <span style={{ color: 'var(--text-faint)' }}>/</span>
             <span style={{ color: '#fff', fontWeight: 600, textTransform: 'capitalize' }}>
-              {currentTab === 'users' ? 'User Directory' : currentTab === 'roles' ? 'Roles & Permissions' : currentTab}
+              {currentTab === 'users' ? 'User Directory' : currentTab === 'roles' ? 'Roles & Permissions' : currentTab === 'account' ? 'My Account & Security' : currentTab}
             </span>
           </div>
 
@@ -99,6 +100,7 @@ function AuthenticatedApp() {
         {/* Content Body */}
         <div className="content-body">
           {currentTab === 'dashboard' && <Dashboard setCurrentTab={setCurrentTab} />}
+          {currentTab === 'account' && <AccountPage />}
           {currentTab === 'users' && <UsersPage />}
           {currentTab === 'roles' && <RolesPage />}
           {currentTab === 'audit' && <AuditPage />}

@@ -17,10 +17,11 @@ export function Navbar({ currentTab, setCurrentTab }) {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'account', label: 'My Account & Security', icon: UserIcon },
     { id: 'users', label: 'User Directory', icon: Users, adminOnly: true },
     { id: 'roles', label: 'Roles & RBAC', icon: KeyRound, adminOnly: true },
     { id: 'audit', label: 'Audit Trail', icon: History, adminOnly: true },
-    { id: 'health', label: 'Health Status', icon: Activity },
+    { id: 'health', label: 'Health & System', icon: Activity },
   ];
 
   return (
@@ -141,7 +142,11 @@ export function Navbar({ currentTab, setCurrentTab }) {
 
       {/* User Session Footer */}
       <div style={{ padding: '16px', borderTop: '1px solid var(--border-subtle)', background: 'rgba(0, 0, 0, 0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <div 
+          onClick={() => setCurrentTab('account')}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', cursor: 'pointer' }}
+          title="Click to manage your account"
+        >
           <div style={{ 
             width: '36px', 
             height: '36px', 

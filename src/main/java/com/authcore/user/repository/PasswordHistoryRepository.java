@@ -10,4 +10,8 @@ import java.util.UUID;
 public interface PasswordHistoryRepository extends JpaRepository<PasswordHistory, UUID> {
 
     List<PasswordHistory> findTop5ByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM PasswordHistory p WHERE p.user.id = :userId")
+    void deleteAllByUserId(@org.springframework.data.repository.query.Param("userId") UUID userId);
 }

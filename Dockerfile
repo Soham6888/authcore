@@ -1,11 +1,26 @@
 # ==============================================================================
-# AuthCore - Multi-Stage Dockerfile
-# Stage 1: Build JAR using Maven with Temurin JDK 21
-# Stage 2: Minimal Distroless / Alpine JRE 21 Runtime
+# AuthCore - Multi-Stage Enterprise Dockerfile
+# Stage 1: Build React 19 Frontend with Node.js
+# Stage 2: Compile & Package Spring Boot 4 / Java 21 Application with Maven
+# Stage 3: Minimal, Hardened Alpine JRE 21 Runtime Container
 # ==============================================================================
 
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# ------------------------------------------------------------------------------
+# Stage 1: Frontend Build
+# ------------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-builder
+WORKDIR /frontend
 
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# ------------------------------------------------------------------------------
+# Stage 2: Backend Maven Build
+# ------------------------------------------------------------------------------
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /build
 
 # Cache Maven wrapper and dependencies
@@ -14,18 +29,21 @@ COPY mvnw pom.xml ./
 RUN chmod +x ./mvnw
 RUN ./mvnw dependency:go-offline -B
 
-# Copy source code and build production jar
+# Copy backend source code
 COPY src/ src/
+
+# Overlay freshly built frontend static bundles into Spring Boot static resources
+COPY --from=frontend-builder /src/main/resources/static/ src/main/resources/static/
+
 RUN ./mvnw clean package -DskipTests -B
 
 # ------------------------------------------------------------------------------
-# Stage 2: Runtime image
+# Stage 3: Hardened Runtime Image
 # ------------------------------------------------------------------------------
 FROM eclipse-temurin:21-jre-alpine AS runtime
-
 WORKDIR /app
 
-# Add a non-root system user for security
+# Non-root user for principle of least privilege
 RUN addgroup -S authcore && adduser -S authcore -G authcore
 USER authcore:authcore
 

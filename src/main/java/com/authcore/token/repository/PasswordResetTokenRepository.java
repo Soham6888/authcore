@@ -12,4 +12,12 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
     Optional<PasswordResetToken> findByTokenHash(String tokenHash);
 
     Optional<PasswordResetToken> findTopByUserIdAndUsedFalseOrderByCreatedAtDesc(UUID userId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM PasswordResetToken t WHERE t.expiresAt < :cutoff OR t.used = true")
+    int deleteExpiredOrUsedTokens(@org.springframework.data.repository.query.Param("cutoff") java.time.Instant cutoff);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM PasswordResetToken t WHERE t.user.id = :userId")
+    void deleteAllByUserId(@org.springframework.data.repository.query.Param("userId") UUID userId);
 }
