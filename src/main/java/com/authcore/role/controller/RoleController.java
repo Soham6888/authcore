@@ -5,6 +5,8 @@ import com.authcore.role.dto.CreateRoleRequest;
 import com.authcore.role.dto.RoleResponse;
 import com.authcore.role.dto.UpdateRoleRequest;
 import com.authcore.role.service.RoleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/roles")
+@Tag(name = "Role Management", description = "Manage roles and permissions. Assign/revoke roles from users. Requires ADMIN or SUPER_ADMIN role.")
 public class RoleController {
 
     private final RoleService roleService;

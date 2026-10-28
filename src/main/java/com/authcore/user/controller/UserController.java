@@ -11,6 +11,8 @@ import com.authcore.user.dto.UserDetailResponse;
 import com.authcore.user.dto.UserSessionResponse;
 import com.authcore.user.entity.UserStatus;
 import com.authcore.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@Tag(name = "User Management", description = "Admin endpoints to list, update, suspend, and manage user sessions. Requires ADMIN or SUPER_ADMIN role.")
 public class UserController {
 
     private final UserService userService;

@@ -1,6 +1,8 @@
 package com.authcore.health;
 
 import com.authcore.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/health")
+@Tag(name = "System Health", description = "Service health checks — database and Redis connectivity status")
 public class HealthController {
 
     private final DataSource dataSource;

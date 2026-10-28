@@ -8,6 +8,6 @@ public class RootController {
 
     @GetMapping("/")
     public String root() {
-        return "redirect:/api/v1/health";
+        return "redirect:/swagger-ui/index.html";
     }
 }

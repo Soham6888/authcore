@@ -10,6 +10,8 @@ import com.authcore.auth.dto.ResetPasswordRequest;
 import com.authcore.auth.dto.UserSummaryResponse;
 import com.authcore.auth.service.AuthService;
 import com.authcore.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication", description = "Register, login, token refresh, logout, and password management")
 public class AuthController {
 
     private final AuthService authService;
@@ -36,6 +39,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Register a new user", description = "Creates a new user account. Returns user profile on success.")
     public ResponseEntity<ApiResponse<UserSummaryResponse>> register(
         @Valid @RequestBody RegisterRequest request,
         HttpServletRequest httpRequest
@@ -47,6 +51,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Login", description = "Authenticates with email & password. Returns JWT access token (15 min) and refresh token (7 days).")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
         @Valid @RequestBody LoginRequest request,
         HttpServletRequest httpRequest
@@ -56,6 +61,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Refresh access token", description = "Exchanges a valid refresh token for a new access + refresh token pair (single-use rotation).")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
         @Valid @RequestBody RefreshTokenRequest request,
         HttpServletRequest httpRequest
@@ -65,6 +71,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "Logout current session", description = "Revokes the current session's refresh token and blacklists the access token immediately.")
     public ResponseEntity<ApiResponse<Void>> logout(
         @RequestBody(required = false) RefreshTokenRequest request,
         HttpServletRequest httpRequest
@@ -75,6 +82,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout-all")
+    @Operation(summary = "Logout all sessions", description = "Revokes all active sessions for the authenticated user across all devices.")
     public ResponseEntity<ApiResponse<Void>> logoutAll(
         @AuthenticationPrincipal UUID userId,
         HttpServletRequest httpRequest
@@ -84,6 +92,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Get current user profile", description = "Returns the authenticated user's profile including roles and permissions.")
     public ResponseEntity<ApiResponse<UserSummaryResponse>> getCurrentUser(
         @AuthenticationPrincipal UUID userId
     ) {
@@ -92,6 +101,7 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
+    @Operation(summary = "Request password reset", description = "Generates a 15-minute one-time reset token. Rate limited to 3 requests/hour per email.")
     public ResponseEntity<ApiResponse<Map<String, String>>> forgotPassword(
         @Valid @RequestBody ForgotPasswordRequest request,
         HttpServletRequest httpRequest
@@ -106,6 +116,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
+    @Operation(summary = "Reset password with token", description = "Resets the password using a valid reset token. Enforces last-5 password history check.")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
         @Valid @RequestBody ResetPasswordRequest request,
         HttpServletRequest httpRequest
@@ -115,6 +126,7 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
+    @Operation(summary = "Change password (authenticated)", description = "Changes password for the authenticated user. Invalidates all active sessions afterward.")
     public ResponseEntity<ApiResponse<Void>> changePassword(
         @AuthenticationPrincipal UUID userId,
         @Valid @RequestBody ChangePasswordRequest request,
