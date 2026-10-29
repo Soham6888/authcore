@@ -8,7 +8,17 @@ import { RolesPage } from './pages/RolesPage';
 import { AuditPage } from './pages/AuditPage';
 import { HealthPage } from './pages/HealthPage';
 import { AccountPage } from './pages/AccountPage';
-import { Shield, ExternalLink, User } from 'lucide-react';
+import { AegisShieldIcon, LaurelWreathIcon, RoleBadge } from './components/ClassicalIcons';
+import { ExternalLink } from 'lucide-react';
+
+const TAB_TITLES = {
+  dashboard: 'I. Forum Principalis',
+  account:   'II. Civitas — My Identity',
+  users:     'III. Directorum Civium',
+  roles:     'IV. Cursus Honorum',
+  audit:     'V. Codex Annales',
+  health:    'VI. Templum Telemetriae'
+};
 
 function AuthenticatedApp() {
   const { user, loading } = useAuth();
@@ -23,21 +33,25 @@ function AuthenticatedApp() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#0a0a0c',
-        color: '#f59e0b',
-        gap: '16px'
+        backgroundColor: 'var(--bg-void)',
+        gap: '20px'
       }}>
         <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid rgba(245, 158, 11, 0.2)',
-          borderTopColor: '#f59e0b',
+          width: '56px',
+          height: '56px',
+          border: '3px solid rgba(212, 175, 55, 0.2)',
+          borderTopColor: 'var(--gold-primary)',
           borderRadius: '50%',
           animation: 'spin 0.8s linear infinite'
         }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-muted)' }}>
-          Authenticating with AuthCore...
+        <div style={{
+          fontFamily: 'var(--font-cinzel)',
+          fontSize: '0.85rem',
+          letterSpacing: '0.15em',
+          color: 'var(--gold-primary)',
+          textTransform: 'uppercase'
+        }}>
+          Consulting Imperial Oracle...
         </div>
       </div>
     );
@@ -47,52 +61,66 @@ function AuthenticatedApp() {
     return <Login />;
   }
 
+  const primaryRole = user?.roles?.includes('SUPER_ADMIN') ? 'SUPER_ADMIN'
+    : user?.roles?.includes('ADMIN') ? 'ADMIN'
+    : user?.roles?.includes('MODERATOR') ? 'MODERATOR'
+    : 'USER';
+
   return (
     <div className="app-container">
       <Navbar currentTab={currentTab} setCurrentTab={setCurrentTab} />
       
       <main className="main-content">
-        {/* Top Header Bar */}
+        {/* Imperial Top Header Bar */}
         <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-muted)' }}>
-            <span>Console</span>
-            <span style={{ color: 'var(--text-faint)' }}>/</span>
-            <span style={{ color: '#fff', fontWeight: 600, textTransform: 'capitalize' }}>
-              {currentTab === 'users' ? 'User Directory' : currentTab === 'roles' ? 'Roles & Permissions' : currentTab === 'account' ? 'My Account & Security' : currentTab}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.7rem', color: 'var(--gold-aged)', letterSpacing: '0.1em' }}>
+              AUTHCORE
+            </span>
+            <span style={{ color: 'var(--gold-hairline)' }}>/</span>
+            <span style={{
+              fontFamily: 'var(--font-cinzel)',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              color: 'var(--text-heading)',
+              letterSpacing: '0.08em'
+            }}>
+              {TAB_TITLES[currentTab] || currentTab}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <a
               href="/swagger-ui/index.html"
               target="_blank"
               rel="noreferrer"
               className="btn btn-secondary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <span>Swagger UI</span>
-              <ExternalLink size={13} color="var(--text-faint)" />
+              <span>API Codex</span>
+              <ExternalLink size={12} />
             </a>
 
+            {/* Active Citizen Badge */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              background: 'var(--bg-surface-elevated)',
+              gap: '10px',
+              padding: '6px 14px',
+              background: 'var(--bg-elevated)',
               borderRadius: '20px',
-              border: '1px solid var(--border-subtle)'
+              border: '1px solid rgba(212,175,55,0.2)'
             }}>
               <div style={{
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
-                background: '#10b981',
+                background: 'var(--status-active)',
                 boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)'
               }} />
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>
+              <span style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-heading)' }}>
                 {user.username}
               </span>
+              <RoleBadge role={primaryRole} />
             </div>
           </div>
         </header>

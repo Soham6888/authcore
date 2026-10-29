@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { authApi, maintenanceApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { 
+  TempleFacadeIcon, 
+  GreekColumnIcon, 
+  WaxSealIcon, 
+  AegisShieldIcon, 
+  LaurelWreathIcon,
+  LaurelDivider 
+} from '../components/ClassicalIcons';
+import { 
   Activity, 
   Database, 
   Server, 
@@ -10,10 +18,11 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   ShieldCheck, 
-  HardDrive,
-  Trash2,
-  Clock,
-  Sparkles
+  Trash2, 
+  Clock, 
+  Sparkles,
+  Zap,
+  HardDrive
 } from 'lucide-react';
 
 export function HealthPage() {
@@ -58,7 +67,7 @@ export function HealthPage() {
       const res = await maintenanceApi.triggerMaintenance();
       setMaintenanceResult(res.data);
     } catch (err) {
-      alert('Maintenance failed: ' + err.message);
+      alert('Sanctuary purification failed: ' + err.message);
     } finally {
       setMaintenanceRunning(false);
     }
@@ -69,200 +78,266 @@ export function HealthPage() {
   }, []);
 
   return (
-    <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+    <div className="fade-in">
+      {/* ─── PAGE HEADER ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#fff' }}>System Health & Infrastructure</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
-            Live status of relational database, cache layers, JVM runtime, and GDPR lifecycle maintenance.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+            <TempleFacadeIcon size={22} color="var(--gold-primary)" />
+            <h1 className="page-title">TEMPLUM TELEMETRIAE</h1>
+          </div>
+          <p className="page-subtitle">
+            The infrastructure oracle — real-time pulse of relational datastores, distributed cache oracles, cryptographic vaults, and automated lifecycle purifications.
           </p>
+          <div className="page-title-line" />
         </div>
 
         <button onClick={fetchHealth} disabled={loading} className="btn btn-secondary">
-          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-          <span>{loading ? 'Pinging...' : 'Ping Health Probe'}</span>
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          <span>{loading ? 'Pinging Oracle...' : 'Interrogate Oracle'}</span>
         </button>
       </div>
 
-      {/* Main Status Banner */}
+      {/* ─── MONUMENTAL GILDED PEDIMENT BANNER ─── */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(18, 18, 22, 0.8))',
-        border: '1px solid rgba(16, 185, 129, 0.25)',
-        borderRadius: '16px',
-        padding: '24px',
-        marginBottom: '28px',
+        background: 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(18,18,24,0.95) 100%)',
+        border: '1px solid rgba(212,175,55,0.3)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '28px 32px',
+        marginBottom: '32px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '16px'
+        gap: '24px',
+        boxShadow: 'var(--shadow-elevated)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{
-            width: '48px',
-            height: '48px',
+            width: '54px',
+            height: '54px',
             borderRadius: '12px',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05))',
+            border: '1px solid rgba(16,185,129,0.4)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#10b981'
+            color: 'var(--status-active)'
           }}>
-            <Activity size={24} />
+            <Activity size={26} />
           </div>
+
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>
-                All Systems Operational
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h2 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                Omnia Subsystemata Stabilia
               </h2>
-              <span className="badge badge-success">HEALTHY</span>
+              <span className="badge badge-active">OPTIMUM</span>
             </div>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Core identity subsystem and database connections are healthy.
+            <p style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '0.95rem', color: 'var(--text-body)', marginTop: '2px' }}>
+              Core identity engines, thread pools, and persistence layers maintain total structural equilibrium.
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '24px' }}>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>
-              Roundtrip Latency
-            </div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
+        {/* Telemetry Pediment Readings */}
+        <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+          <div style={{ textAlign: 'right' }}>
+            <div className="roman-label">Velocitas Responsi</div>
+            <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-active)', marginTop: '2px' }}>
               {latency !== null ? `${latency} ms` : '—'}
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>
-              Primary Datastore
-            </div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginTop: '2px' }}>
+
+          <div style={{ width: '1px', height: '40px', background: 'rgba(212,175,55,0.2)' }} />
+
+          <div style={{ textAlign: 'right' }}>
+            <div className="roman-label">Datastore Primarius</div>
+            <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1.6rem', fontWeight: 800, color: 'var(--gold-bright)', marginTop: '2px' }}>
               {healthData?.database || 'UP'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Grid of Subsystems */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '28px' }}>
-        {/* Card 1: Relational DB */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' }}>
+      {/* ─── PERISTYLE LAYOUT: THREE GRAND STRUCTURAL COLUMNS ─── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '24px',
+        marginBottom: '32px'
+      }}>
+        {/* Columna I: Datastore Pillar */}
+        <div className="columna">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                padding: '8px',
+                borderRadius: '8px',
+                background: 'rgba(59,130,246,0.12)',
+                color: '#60a5fa',
+                border: '1px solid rgba(59,130,246,0.25)'
+              }}>
                 <Database size={20} />
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>Relational DB</h3>
+              <div>
+                <div className="roman-label">Columna Prima</div>
+                <h3 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                  Relational Datastore
+                </h3>
+              </div>
             </div>
-            <span className={`badge ${healthData?.database === 'UP' ? 'badge-active' : 'badge-suspended'}`}>
+
+            <span className={`badge ${healthData?.database === 'UP' ? 'badge-active' : 'badge-danger'}`}>
               {healthData?.database || 'CONNECTING'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.82rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
               <span style={{ color: 'var(--text-muted)' }}>Connection Pool:</span>
-              <span style={{ color: '#fff' }}>HikariCP (Max 10)</span>
+              <span style={{ color: 'var(--text-heading)', fontWeight: 600 }}>HikariCP (Max 10)</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
               <span style={{ color: 'var(--text-muted)' }}>Schema Engine:</span>
-              <span style={{ color: '#fff' }}>Flyway V1-V3</span>
+              <span style={{ color: 'var(--gold-bright)', fontWeight: 600 }}>Flyway V1 - V3</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Isolation Grade:</span>
+              <span style={{ color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>READ_COMMITTED</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Read Isolation:</span>
-              <span style={{ color: '#fff' }}>READ_COMMITTED</span>
+              <span style={{ color: 'var(--text-muted)' }}>Engine Variant:</span>
+              <span style={{ color: 'var(--text-heading)' }}>H2 In-Memory / Postgres</span>
             </div>
           </div>
         </div>
 
-        {/* Card 2: Cache & Rate Limiting */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.12)', color: '#fbbf24' }}>
+        {/* Columna II: Cache Oracle Pillar */}
+        <div className="columna">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                padding: '8px',
+                borderRadius: '8px',
+                background: 'rgba(212,175,55,0.12)',
+                color: 'var(--gold-bright)',
+                border: '1px solid rgba(212,175,55,0.3)'
+              }}>
                 <Server size={20} />
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>Cache & Limits</h3>
+              <div>
+                <div className="roman-label">Columna Secunda</div>
+                <h3 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                  Cache Oracle &amp; Limits
+                </h3>
+              </div>
             </div>
-            <span className="badge badge-gold">ACTIVE</span>
+
+            <span className="badge badge-imperator">
+              {healthData?.redis === 'UP' ? 'REDIS 7' : 'FALLBACK'}
+            </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.82rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
               <span style={{ color: 'var(--text-muted)' }}>Cache Store:</span>
-              <strong style={{ color: '#fbbf24' }}>
+              <strong style={{ color: 'var(--gold-bright)' }}>
                 {healthData?.redis === 'UP' ? 'Redis 7 Alpine' : 'In-Memory Fallback'}
               </strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Rate Limiter:</span>
-              <span style={{ color: '#fff' }}>5 / 15m (IP) · 5 / 30m (Lock)</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Sliding Rate Window:</span>
+              <span style={{ color: 'var(--text-heading)' }}>5 / 15m (IP) · 5 / 30m (Lock)</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-muted)' }}>JTI Blacklist Oracle:</span>
+              <span style={{ color: 'var(--status-active)' }}>Instant Revocation</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>JWT Blacklist:</span>
-              <span style={{ color: '#34d399' }}>Instant Revocation by JTI</span>
+              <span style={{ color: 'var(--text-muted)' }}>Lockout Decay:</span>
+              <span style={{ color: 'var(--text-heading)' }}>30 Minutes Exponential</span>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Security & Cryptography */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' }}>
+        {/* Columna III: Vault of Cryptography */}
+        <div className="columna">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                padding: '8px',
+                borderRadius: '8px',
+                background: 'rgba(168,85,247,0.12)',
+                color: '#c084fc',
+                border: '1px solid rgba(168,85,247,0.25)'
+              }}>
                 <ShieldCheck size={20} />
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>Cryptography</h3>
+              <div>
+                <div className="roman-label">Columna Tertia</div>
+                <h3 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                  Vault of Cryptography
+                </h3>
+              </div>
             </div>
+
             <span className="badge badge-active">SECURE</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Password Hashing:</span>
-              <strong style={{ color: '#fff', fontFamily: 'monospace' }}>BCrypt (Strength 12)</strong>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.82rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Password Hash:</span>
+              <span style={{ color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>BCrypt (Strength 12)</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
               <span style={{ color: 'var(--text-muted)' }}>JWT Algorithm:</span>
-              <span style={{ color: '#fff', fontFamily: 'monospace' }}>HMAC-SHA512</span>
+              <span style={{ color: 'var(--gold-bright)', fontFamily: 'var(--font-mono)' }}>HMAC-SHA512</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Token Rotation:</span>
+              <span style={{ color: 'var(--status-active)' }}>SHA-256 Single-Use</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Token Rotation:</span>
-              <span style={{ color: '#34d399' }}>SHA-256 Single-Use</span>
+              <span style={{ color: 'var(--text-muted)' }}>Entropy Standard:</span>
+              <span style={{ color: 'var(--text-heading)' }}>NIST SP 800-63B</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Admin Maintenance & Runtime Section */}
+      {/* ─── ADMIN TELEMETRY & PURIFICATION SECTION ─── */}
       {isAdmin && isAdmin() && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-          {/* Card: JVM Runtime Metrics */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+          {/* Tablet: JVM Telemetry */}
           {detailedData && (
             <div className="card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(236, 72, 153, 0.12)', color: '#f472b6' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(236,72,153,0.12)', color: '#f472b6' }}>
                   <Cpu size={20} />
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>JVM Runtime & Telemetry</h3>
+                <div>
+                  <div className="roman-label">Vires Machinae</div>
+                  <h3 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                    JVM Runtime &amp; Telemetry
+                  </h3>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Available Processors:</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>{detailedData.availableProcessors} Cores</span>
+                  <span style={{ color: 'var(--text-heading)', fontWeight: 600 }}>{detailedData.availableProcessors} Cores</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Total Allocated Heap:</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Allocated Heap Memory:</span>
+                  <span style={{ color: 'var(--text-heading)', fontWeight: 600 }}>
                     {Math.round(detailedData.jvmMemoryTotalBytes / (1024 * 1024))} MB
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Free Heap Memory:</span>
-                  <span style={{ color: '#10b981', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--status-active)', fontWeight: 600 }}>
                     {Math.round(detailedData.jvmMemoryFreeBytes / (1024 * 1024))} MB
                   </span>
                 </div>
@@ -270,40 +345,57 @@ export function HealthPage() {
             </div>
           )}
 
-          {/* Card: GDPR & Maintenance Control */}
-          <div className="card">
+          {/* Tablet: GDPR Purification Sanctuary */}
+          <div className="card" style={{ border: '1px solid rgba(212,175,55,0.3)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-              <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}>
+              <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(212,175,55,0.15)', color: 'var(--gold-primary)' }}>
                 <Sparkles size={20} />
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>GDPR Lifecycle Maintenance</h3>
+              <div>
+                <div className="roman-label">Purgatio Sancta</div>
+                <h3 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                  GDPR Lifecycle Purification
+                </h3>
+              </div>
             </div>
 
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.5 }}>
-              Executes nightly at 02:00 AM (PRD BR-28/BR-30). Purges expired refresh & reset tokens, archives audit logs &gt;90 days, and erases soft-deleted users &gt;30 days.
+            <p style={{
+              fontFamily: 'var(--font-cormorant)',
+              fontStyle: 'italic',
+              fontSize: '0.88rem',
+              color: 'var(--text-muted)',
+              marginBottom: '16px',
+              lineHeight: 1.5
+            }}>
+              Executes nightly at 02:00 AM (PRD BR-28/BR-30). Purges expired refresh &amp; reset tokens, archives audit scrolls &gt;90 days, and erases soft-deleted accounts &gt;30 days.
             </p>
 
             <button
               onClick={handleTriggerMaintenance}
               disabled={maintenanceRunning}
-              className="btn btn-secondary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center' }}
+              className="btn btn-primary"
+              style={{ width: '100%' }}
             >
               <RefreshCw size={14} className={maintenanceRunning ? 'animate-spin' : ''} />
-              <span>{maintenanceRunning ? 'Executing Cycle...' : 'Trigger Maintenance Cycle Now'}</span>
+              <span>{maintenanceRunning ? 'Purifying Sanctuary...' : 'Trigger Purification Cycle Now'}</span>
             </button>
 
             {maintenanceResult && (
               <div style={{
                 marginTop: '16px',
-                padding: '12px',
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: '#10b981'
+                padding: '14px',
+                background: 'rgba(16,185,129,0.08)',
+                border: '1px solid rgba(16,185,129,0.25)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.78rem',
+                color: 'var(--status-active)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
               }}>
-                <div style={{ fontWeight: 600, marginBottom: '6px' }}>Cycle Summary:</div>
+                <div style={{ fontFamily: 'var(--font-cinzel)', fontWeight: 700, marginBottom: '4px', color: 'var(--status-active)' }}>
+                  Decretum Purgationis:
+                </div>
                 <div>• Expired refresh tokens purged: <strong>{maintenanceResult.purgedRefreshTokens}</strong></div>
                 <div>• Password reset tokens purged: <strong>{maintenanceResult.purgedResetTokens}</strong></div>
                 <div>• Audit logs archived (&gt;90d): <strong>{maintenanceResult.archivedAuditLogs}</strong></div>

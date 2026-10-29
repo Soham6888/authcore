@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { usersApi, rolesApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { 
+  WaxSealIcon, 
+  GreekColumnIcon, 
+  AegisShieldIcon, 
+  RoleBadge 
+} from '../components/ClassicalIcons';
+import { 
   Users, 
   Search, 
   Filter, 
@@ -12,7 +18,6 @@ import {
   XCircle, 
   Eye, 
   X, 
-  Key, 
   Smartphone, 
   AlertCircle 
 } from 'lucide-react';
@@ -35,7 +40,7 @@ export function UsersPage() {
   const [statusModal, setStatusModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
 
-  // User detail tabs: 'profile' | 'sessions' | 'logs'
+  // User detail state
   const [userSessions, setUserSessions] = useState([]);
   const [userLogs, setUserLogs] = useState([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -59,7 +64,7 @@ export function UsersPage() {
         setTotalElements(res.data.totalElements || 0);
       }
     } catch (err) {
-      console.error('Failed to load users:', err);
+      console.error('Failed to load citizens roster:', err);
     } finally {
       setLoading(false);
     }
@@ -98,7 +103,7 @@ export function UsersPage() {
       await usersApi.revokeSession(selectedUser.id, sessionId);
       setUserSessions(prev => prev.filter(s => s.id !== sessionId));
     } catch (err) {
-      alert('Failed to revoke session: ' + err.message);
+      alert('Revocation failed: ' + err.message);
     }
   };
 
@@ -108,7 +113,7 @@ export function UsersPage() {
     setModalSuccess(null);
     try {
       await usersApi.assignRole(selectedUser.id, targetRole);
-      setModalSuccess(`Role '${targetRole}' assigned successfully!`);
+      setModalSuccess(`Dignity '${targetRole}' conferred successfully!`);
       loadUsers();
       setTimeout(() => {
         setRoleModal(false);
@@ -119,24 +124,13 @@ export function UsersPage() {
     }
   };
 
-  const handleRemoveRole = async (roleId, roleName) => {
-    if (!window.confirm(`Are you sure you want to remove '${roleName}' from ${selectedUser.username}?`)) return;
-    try {
-      await usersApi.removeRole(selectedUser.id, roleId);
-      loadUsers();
-      setRoleModal(false);
-    } catch (err) {
-      alert('Failed to remove role: ' + err.message);
-    }
-  };
-
   const handleStatusChange = async (newStatus) => {
     try {
       await usersApi.updateStatus(selectedUser.id, newStatus);
       loadUsers();
       setStatusModal(false);
     } catch (err) {
-      alert('Failed to update status: ' + err.message);
+      alert('Status alteration failed: ' + err.message);
     }
   };
 
@@ -146,266 +140,274 @@ export function UsersPage() {
       loadUsers();
       setDeleteModal(false);
     } catch (err) {
-      alert('Failed to delete user: ' + err.message);
+      alert('Soft deletion failed: ' + err.message);
     }
   };
 
   return (
-    <div>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+    <div className="fade-in">
+      {/* ─── PAGE HEADER ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#fff' }}>User Directory</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
-            Inspect accounts, manage role assignments, and supervise security states.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+            <Users size={22} color="var(--gold-primary)" />
+            <h1 className="page-title">DIRECTORUM CIVIUM</h1>
+          </div>
+          <p className="page-subtitle">
+            The imperial census of registered citizens — oversee dignities, inspect active tesserae, and regulate standing.
           </p>
+          <div className="page-title-line" />
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
+      {/* ─── FILTER AND SEARCH FORUM ─── */}
       <div className="card" style={{ padding: '16px 20px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Search */}
-          <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-            <Search size={16} color="var(--text-faint)" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+          {/* Classical Search Input */}
+          <div className="search-bar" style={{ flex: 1, minWidth: '260px' }}>
+            <Search size={16} color="var(--gold-aged)" />
             <input
               type="text"
-              placeholder="Search by username or email..."
+              placeholder="Search by citizen username or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '38px' }}
             />
           </div>
 
-          {/* Status Filter */}
+          {/* Status Filter Chips */}
           <div style={{ display: 'flex', gap: '6px' }}>
-            {['', 'ACTIVE', 'SUSPENDED'].map(st => (
+            {[
+              { id: '', label: 'Omnes (All)' },
+              { id: 'ACTIVE', label: 'Stabilis (Active)' },
+              { id: 'SUSPENDED', label: 'Interdictus (Suspended)' }
+            ].map(st => (
               <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: statusFilter === st ? '1px solid #f59e0b' : '1px solid var(--border-subtle)',
-                  background: statusFilter === st ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-surface-elevated)',
-                  color: statusFilter === st ? '#fbbf24' : 'var(--text-muted)'
-                }}
+                key={st.id}
+                onClick={() => setStatusFilter(st.id)}
+                className={`btn btn-sm ${statusFilter === st.id ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ fontSize: '0.62rem' }}
               >
-                {st === '' ? 'All Statuses' : st}
+                {st.label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Users Data Table */}
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Status</th>
-              <th>Assigned Roles</th>
-              <th>Created Date</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+      {/* ─── CENSUS DATA TABLE ─── */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  Loading users...
-                </td>
+                <th>Civis (Citizen)</th>
+                <th>Status</th>
+                <th>Tituli Dignitatis</th>
+                <th>Inscriptio (Created)</th>
+                <th style={{ textAlign: 'right' }}>Actiones</th>
               </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-faint)' }}>
-                  No matching user accounts found.
-                </td>
-              </tr>
-            ) : (
-              users.map(u => (
-                <tr key={u.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #374151, #1f2937)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        fontSize: '13px',
-                        color: '#fbbf24'
-                      }}>
-                        {u.username ? u.username[0].toUpperCase() : 'U'}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600, color: '#fff' }}>
-                          {u.firstName ? `${u.firstName} ${u.lastName}` : u.username}
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-faint)', fontFamily: 'monospace' }}>
-                          {u.email}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${u.status === 'ACTIVE' ? 'badge-active' : 'badge-suspended'}`}>
-                      {u.status}
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
+                    <span className="spinner-lg spinner" style={{ display: 'block', margin: '0 auto 16px' }} />
+                    <span style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '1.1rem' }}>
+                      Consulting the Census Rolls...
                     </span>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {u.roles?.map(r => (
-                        <span key={r} className="badge badge-gold">
-                          {r}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', gap: '6px' }}>
-                      <button
-                        onClick={() => openUserDetail(u)}
-                        className="btn btn-secondary btn-sm"
-                        title="View Details & Sessions"
-                      >
-                        <Eye size={13} />
-                        Details
-                      </button>
-                      <button
-                        onClick={() => { setSelectedUser(u); setRoleModal(true); }}
-                        className="btn btn-secondary btn-sm"
-                        title="Assign / Remove Roles"
-                      >
-                        <Shield size={13} color="#f59e0b" />
-                        Roles
-                      </button>
-                      <button
-                        onClick={() => { setSelectedUser(u); setStatusModal(true); }}
-                        className="btn btn-secondary btn-sm"
-                        title="Change Account Status"
-                      >
-                        Status
-                      </button>
-                      {isSuperAdmin() && u.id !== currentUser?.id && (
-                        <button
-                          onClick={() => { setSelectedUser(u); setDeleteModal(true); }}
-                          className="btn btn-danger btn-sm"
-                          title="Delete User"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '60px', color: 'var(--text-faint)' }}>
+                    <p style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '1.05rem' }}>
+                      Nulli cives inventi — No matching citizens inscribed in the codex.
+                    </p>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                users.map(u => (
+                  <tr key={u.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, var(--gold-bronze), var(--gold-aged))',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontFamily: 'var(--font-cinzel)',
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          color: '#06060a'
+                        }}>
+                          {u.username ? u.username[0].toUpperCase() : 'U'}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-heading)' }}>
+                            {u.firstName ? `${u.firstName} ${u.lastName}` : u.username}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
+                            {u.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${u.status === 'ACTIVE' ? 'badge-active' : 'badge-danger'}`}>
+                        {u.status === 'ACTIVE' ? 'Stabilis' : 'Interdictus'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {u.roles?.map(r => (
+                          <RoleBadge key={r} role={r} />
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                        <button
+                          onClick={() => openUserDetail(u)}
+                          className="btn btn-secondary btn-sm"
+                          title="Inspect Details & Sessions"
+                        >
+                          <Eye size={12} />
+                          <span>Inspect</span>
+                        </button>
+                        <button
+                          onClick={() => { setSelectedUser(u); setRoleModal(true); }}
+                          className="btn btn-secondary btn-sm"
+                          title="Confer Dignities"
+                        >
+                          <Shield size={12} color="var(--gold-primary)" />
+                          <span>Dignitates</span>
+                        </button>
+                        <button
+                          onClick={() => { setSelectedUser(u); setStatusModal(true); }}
+                          className="btn btn-ghost btn-sm"
+                          title="Alter Standing"
+                          style={{ border: '1px solid var(--border-subtle)' }}
+                        >
+                          Status
+                        </button>
+                        {isSuperAdmin() && u.id !== currentUser?.id && (
+                          <button
+                            onClick={() => { setSelectedUser(u); setDeleteModal(true); }}
+                            className="btn btn-danger btn-sm"
+                            title="Soft Delete Citizen"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Pagination Footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', fontSize: '13px', color: 'var(--text-muted)' }}>
-        <div>Total: <strong>{totalElements}</strong> accounts</div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+      {/* ─── ROMAN PAGINATION FOOTER ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+        <div>Census: <strong>{totalElements}</strong> citizens registered</div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             disabled={page === 0}
             onClick={() => setPage(p => Math.max(0, p - 1))}
             className="btn btn-secondary btn-sm"
           >
-            Previous
+            ← Retro
           </button>
-          <span style={{ padding: '6px 12px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-            Page {page + 1}
+          <span style={{ padding: '5px 12px', background: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-subtle)', fontFamily: 'var(--font-cinzel)', fontSize: '0.7rem' }}>
+            Tabula {page + 1}
           </span>
           <button
             disabled={(page + 1) * size >= totalElements}
             onClick={() => setPage(p => p + 1)}
             className="btn btn-secondary btn-sm"
           >
-            Next
+            Ultra →
           </button>
         </div>
       </div>
 
-      {/* MODAL 1: User Detail & Session Inspector */}
+      {/* ─── MODAL 1: CITIZEN DETAIL & SESSIONS ─── */}
       {detailModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setDetailModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '650px' }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '640px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f59e0b', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold-bronze), var(--gold-aged))', color: '#06060a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-cinzel)', fontWeight: 800 }}>
                   {selectedUser.username[0].toUpperCase()}
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff' }}>{selectedUser.username}</h3>
-                  <div style={{ fontSize: '12px', color: 'var(--text-faint)', fontFamily: 'monospace' }}>{selectedUser.id}</div>
+                  <h3 className="modal-title">{selectedUser.username}</h3>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>{selectedUser.id}</div>
                 </div>
               </div>
-              <button onClick={() => setDetailModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <X size={20} />
+              <button onClick={() => setDetailModal(false)} className="btn-ghost" style={{ cursor: 'pointer', padding: '4px' }}>
+                <X size={18} />
               </button>
             </div>
 
-            <div style={{ padding: '24px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Smartphone size={16} color="#60a5fa" />
-                Active Refresh Token Sessions ({userSessions.length} / 5 max)
-              </h4>
+            <div className="modal-body">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <Smartphone size={16} color="var(--gold-primary)" />
+                <h4 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                  Active Tesserae Sessions ({userSessions.length} / 5 max)
+                </h4>
+              </div>
 
               {loadingDetail ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Loading sessions...</div>
               ) : userSessions.length === 0 ? (
-                <div style={{ padding: '16px', background: 'var(--bg-surface-elevated)', borderRadius: '8px', color: 'var(--text-faint)', fontSize: '13px' }}>
-                  No active refresh token sessions currently recorded for this user.
+                <div style={{ padding: '16px', background: 'var(--bg-void)', borderRadius: '6px', color: 'var(--text-faint)', fontSize: '0.8rem' }}>
+                  No active refresh token sessions currently recorded for this citizen.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {userSessions.map(s => (
-                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-surface-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-void)', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.15)' }}>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-heading)' }}>
                           {s.deviceInfo || 'Standard Browser'}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginTop: '2px' }}>
-                          IP: {s.ipAddress || '127.0.0.1'} · Expires: {new Date(s.expiresAt).toLocaleString()}
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-faint)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+                          IP: {s.ipAddress || '127.0.0.1'} · Expires: {new Date(s.expiresAt).toLocaleDateString()}
                         </div>
                       </div>
                       <button
                         onClick={() => handleRevokeSession(s.id)}
                         className="btn btn-danger btn-sm"
                       >
-                        Revoke
+                        Banish
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)', marginTop: '24px', marginBottom: '12px' }}>
-                Recent Security Audit Events
+              <h4 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-heading)', marginTop: '24px', marginBottom: '12px' }}>
+                Recent Security Audit Inscriptions
               </h4>
 
               {userLogs.length === 0 ? (
-                <div style={{ padding: '16px', background: 'var(--bg-surface-elevated)', borderRadius: '8px', color: 'var(--text-faint)', fontSize: '13px' }}>
-                  No recent audit records.
+                <div style={{ padding: '16px', background: 'var(--bg-void)', borderRadius: '6px', color: 'var(--text-faint)', fontSize: '0.8rem' }}>
+                  No recent audit records inscribed.
                 </div>
               ) : (
-                <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                <div style={{ maxHeight: '180px', overflowY: 'auto', background: 'var(--bg-void)', borderRadius: '6px', padding: '8px' }}>
                   {userLogs.map(l => (
-                    <div key={l.id} style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                      <span className="badge badge-neutral" style={{ fontFamily: 'monospace' }}>{l.action}</span>
+                    <div key={l.id} style={{ padding: '8px 10px', borderBottom: '1px solid rgba(212,175,55,0.08)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                      <span className="badge badge-imperator" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem' }}>{l.action}</span>
                       <span style={{ color: 'var(--text-faint)' }}>{new Date(l.timestamp).toLocaleString()}</span>
                     </div>
                   ))}
@@ -416,68 +418,70 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* MODAL 2: Role Management */}
+      {/* ─── MODAL 2: CONFER DIGNITIES (ROLES) ─── */}
       {roleModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setRoleModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>
-                Manage Roles: {selectedUser.username}
-              </h3>
-              <button onClick={() => setRoleModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <WaxSealIcon size={20} color="var(--gold-primary)" />
+                <h3 className="modal-title">
+                  Confer Dignity: {selectedUser.username}
+                </h3>
+              </div>
+              <button onClick={() => setRoleModal(false)} className="btn-ghost" style={{ cursor: 'pointer', padding: '4px' }}>
                 <X size={18} />
               </button>
             </div>
 
-            <div style={{ padding: '24px' }}>
+            <div className="modal-body">
               {modalError && (
-                <div style={{ padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', borderRadius: '8px', fontSize: '13px', marginBottom: '16px' }}>
+                <div style={{ padding: '10px 14px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)', borderRadius: '6px', color: 'var(--status-danger)', fontSize: '0.8rem', marginBottom: '16px' }}>
                   {modalError}
                 </div>
               )}
               {modalSuccess && (
-                <div style={{ padding: '10px 14px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', borderRadius: '8px', fontSize: '13px', marginBottom: '16px' }}>
+                <div style={{ padding: '10px 14px', background: 'var(--status-active-bg)', border: '1px solid var(--status-active)', borderRadius: '6px', color: 'var(--status-active)', fontSize: '0.8rem', marginBottom: '16px' }}>
                   {modalSuccess}
                 </div>
               )}
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>
-                  Currently Assigned Roles:
+                <label className="roman-label" style={{ display: 'block', marginBottom: '8px' }}>
+                  Currently Conferred Dignities:
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {selectedUser.roles?.map(r => (
-                    <span key={r} className="badge badge-gold" style={{ fontSize: '12px', padding: '4px 10px' }}>
-                      {r}
-                    </span>
+                    <RoleBadge key={r} role={r} />
                   ))}
                 </div>
               </div>
 
               <form onSubmit={handleAssignRole} style={{ marginTop: '20px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-                  Assign New Role:
+                <label className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
+                  Confer Additional Dignity:
                 </label>
                 <select
+                  className="input-field"
                   value={targetRole}
                   onChange={e => setTargetRole(e.target.value)}
                   required
                   style={{ marginBottom: '16px' }}
                 >
-                  <option value="">Select a role to assign...</option>
+                  <option value="">Select a title to confer...</option>
                   {availableRoles.map(r => (
                     <option key={r.id} value={r.name}>
-                      {r.name} {r.isSystem ? '(System)' : ''}
+                      {r.name} {r.isSystem ? '(System Dignity)' : '(Custom Dignity)'}
                     </option>
                   ))}
                 </select>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <button type="button" onClick={() => setRoleModal(false)} className="btn btn-secondary">
-                    Cancel
+                <div className="modal-footer" style={{ padding: 0 }}>
+                  <button type="button" onClick={() => setRoleModal(false)} className="btn btn-ghost">
+                    Abrogare
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Assign Role
+                    Confer Dignity
                   </button>
                 </div>
               </form>
@@ -486,36 +490,36 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* MODAL 3: Change Status */}
+      {/* ─── MODAL 3: ALTER STANDING (STATUS) ─── */}
       {statusModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setStatusModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>Change Status: {selectedUser.username}</h3>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Alter Citizen Standing: {selectedUser.username}</h3>
             </div>
-            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-                Current status is <strong style={{ color: '#fff' }}>{selectedUser.status}</strong>. Select the new account status:
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-body)' }}>
+                Current standing is <strong style={{ color: 'var(--gold-bright)' }}>{selectedUser.status}</strong>. Select the updated standing decree:
               </p>
               <button
                 onClick={() => handleStatusChange('ACTIVE')}
                 className="btn btn-secondary"
-                style={{ borderColor: '#10b981', color: '#34d399', justifyContent: 'flex-start' }}
+                style={{ borderColor: 'var(--status-active)', color: 'var(--status-active)', justifyContent: 'flex-start' }}
               >
                 <CheckCircle size={16} />
-                Set to ACTIVE (Permit user login and session refreshes)
+                <span>Declare STABILIS (Active admission and token renewals allowed)</span>
               </button>
               <button
                 onClick={() => handleStatusChange('SUSPENDED')}
                 className="btn btn-secondary"
-                style={{ borderColor: '#ef4444', color: '#f87171', justifyContent: 'flex-start' }}
+                style={{ borderColor: 'var(--status-danger)', color: 'var(--status-danger)', justifyContent: 'flex-start' }}
               >
                 <XCircle size={16} />
-                Set to SUSPENDED (Block logins immediately)
+                <span>Declare INTERDICTUS (Suspended — block all logins immediately)</span>
               </button>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-                <button onClick={() => setStatusModal(false)} className="btn btn-secondary">
-                  Close
+              <div className="modal-footer" style={{ padding: 0, marginTop: '8px' }}>
+                <button onClick={() => setStatusModal(false)} className="btn btn-ghost">
+                  Claudere
                 </button>
               </div>
             </div>
@@ -523,29 +527,29 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* MODAL 4: Delete User Confirmation */}
+      {/* ─── MODAL 4: SOFT DELETION CONFIRMATION ─── */}
       {deleteModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setDeleteModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title" style={{ color: 'var(--status-danger)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <AlertCircle size={20} />
                 Confirm Soft Deletion
               </h3>
             </div>
-            <div style={{ padding: '24px' }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-main)', marginBottom: '16px' }}>
-                Are you sure you want to delete user <strong>{selectedUser.username}</strong> ({selectedUser.email})?
+            <div className="modal-body">
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-body)', marginBottom: '16px', lineHeight: 1.6 }}>
+                Are you certain you wish to execute soft-deletion on citizen <strong>{selectedUser.username}</strong> ({selectedUser.email})?
               </p>
-              <div style={{ fontSize: '12px', color: 'var(--text-faint)', marginBottom: '24px' }}>
-                In accordance with BR-15, this will perform a soft-delete (setting <code>deleted_at</code> timestamp) and invalidate all active user sessions immediately.
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '24px', background: 'var(--bg-void)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.1)' }}>
+                In accordance with BR-15, this sets the <code>deleted_at</code> timestamp, immediately severs all active tokens, and initiates the 30-day retention window.
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button onClick={() => setDeleteModal(false)} className="btn btn-secondary">
-                  Cancel
+              <div className="modal-footer" style={{ padding: 0 }}>
+                <button onClick={() => setDeleteModal(false)} className="btn btn-ghost">
+                  Abrogare
                 </button>
                 <button onClick={handleDeleteUser} className="btn btn-danger">
-                  Delete User Account
+                  Delete Citizen Account
                 </button>
               </div>
             </div>

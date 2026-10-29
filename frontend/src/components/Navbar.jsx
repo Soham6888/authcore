@@ -1,97 +1,200 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  ShieldCheck, 
-  LayoutDashboard, 
-  Users, 
-  KeyRound, 
-  History, 
-  Activity, 
-  LogOut, 
-  ExternalLink,
-  User as UserIcon
+import { AegisShieldIcon, LaurelWreathIcon, RoleBadge } from './ClassicalIcons';
+import {
+  LayoutDashboard, Users, Shield, BookOpen,
+  HeartPulse, LogOut, User, ChevronRight
 } from 'lucide-react';
 
-export function Navbar({ currentTab, setCurrentTab }) {
-  const { user, logout, isAdmin } = useAuth();
+const NAV_ITEMS = [
+  { id: 'dashboard', roman: 'I',   latin: 'Forum',          label: 'Dashboard',     icon: LayoutDashboard, roles: ['SUPER_ADMIN','ADMIN','MODERATOR','USER'] },
+  { id: 'account',   roman: 'II',  latin: 'Civitas',        label: 'My Account',    icon: User,            roles: ['SUPER_ADMIN','ADMIN','MODERATOR','USER'] },
+  { id: 'users',     roman: 'III', latin: 'Directorum',     label: 'Users',         icon: Users,           roles: ['SUPER_ADMIN','ADMIN','MODERATOR'] },
+  { id: 'roles',     roman: 'IV',  latin: 'Cursus Honorum', label: 'Roles',         icon: Shield,          roles: ['SUPER_ADMIN','ADMIN'] },
+  { id: 'audit',     roman: 'V',   latin: 'Codex Annales',  label: 'Audit',         icon: BookOpen,        roles: ['SUPER_ADMIN','ADMIN'] },
+  { id: 'health',    roman: 'VI',  latin: 'Templum',        label: 'Health',        icon: HeartPulse,      roles: ['SUPER_ADMIN','ADMIN'] },
+];
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'account', label: 'My Account & Security', icon: UserIcon },
-    { id: 'users', label: 'User Directory', icon: Users, adminOnly: true },
-    { id: 'roles', label: 'Roles & RBAC', icon: KeyRound, adminOnly: true },
-    { id: 'audit', label: 'Audit Trail', icon: History, adminOnly: true },
-    { id: 'health', label: 'Health & System', icon: Activity },
-  ];
+export function Navbar({ currentTab, setCurrentTab }) {
+  const { user, logout } = useAuth();
+  if (!user) return null;
+
+  const userRoles = user.roles || [];
+  const visibleItems = NAV_ITEMS.filter(item =>
+    item.roles.some(r => userRoles.includes(r))
+  );
+
+  const primaryRole = userRoles.includes('SUPER_ADMIN') ? 'SUPER_ADMIN'
+    : userRoles.includes('ADMIN') ? 'ADMIN'
+    : userRoles.includes('MODERATOR') ? 'MODERATOR'
+    : 'USER';
 
   return (
-    <aside className="sidebar">
-      {/* Brand Header */}
-      <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ 
-          width: '38px', 
-          height: '38px', 
-          borderRadius: '10px', 
-          background: 'linear-gradient(135deg, #f59e0b, #b45309)',
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
-        }}>
-          <ShieldCheck size={22} color="#000" strokeWidth={2.5} />
-        </div>
-        <div>
-          <div style={{ fontWeight: '800', fontSize: '17px', letterSpacing: '-0.3px', color: '#fff' }}>
-            Auth<span style={{ color: '#f59e0b' }}>Core</span>
+    <nav style={{
+      width: '260px',
+      minWidth: '260px',
+      height: '100vh',
+      background: 'var(--bg-surface)',
+      borderRight: '1px solid rgba(212,175,55,0.15)',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      position: 'relative',
+    }}>
+      {/* Left fluted column accent */}
+      <div style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '3px',
+        background: 'linear-gradient(180deg, var(--gold-primary) 0%, var(--gold-bronze) 50%, var(--gold-primary) 100%)',
+        opacity: 0.6,
+      }} />
+
+      {/* Imperial Frieze Header */}
+      <div style={{
+        padding: '24px 20px 20px 24px',
+        borderBottom: '1px solid rgba(212,175,55,0.15)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <div style={{
+            width: '38px', height: '38px',
+            background: 'linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.05))',
+            border: '1px solid rgba(212,175,55,0.4)',
+            borderRadius: '8px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <AegisShieldIcon size={20} color="var(--gold-primary)" />
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>
-            Identity & Access
+          <div>
+            <div style={{
+              fontFamily: 'var(--font-cinzel)',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              letterSpacing: '0.15em',
+              color: 'var(--gold-primary)',
+            }}>AUTHCORE</div>
+            <div style={{
+              fontFamily: 'var(--font-cormorant)',
+              fontSize: '0.7rem',
+              fontStyle: 'italic',
+              color: 'var(--text-faint)',
+              letterSpacing: '0.04em',
+            }}>Imperial IAM Console</div>
           </div>
         </div>
+
+        {/* Gold hairline divider */}
+        <div style={{
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.3), transparent)',
+          marginTop: '12px',
+        }} />
       </div>
 
-      {/* Nav Menu */}
-      <nav style={{ padding: '20px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '1px', padding: '6px 12px', marginBottom: '4px' }}>
-          Management
-        </div>
-        
-        {navItems.map(item => {
-          if (item.adminOnly && !isAdmin()) return null;
+      {/* Navigation */}
+      <div style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
+        <div style={{
+          fontFamily: 'var(--font-cinzel)',
+          fontSize: '0.55rem',
+          letterSpacing: '0.2em',
+          color: 'var(--text-faint)',
+          padding: '0 8px',
+          marginBottom: '10px',
+          textTransform: 'uppercase',
+        }}>Navigatio</div>
+
+        {visibleItems.map(item => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
-
           return (
             <button
               key={item.id}
               onClick={() => setCurrentTab(item.id)}
               style={{
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                padding: '11px 14px',
-                borderRadius: '10px',
-                fontSize: '14px',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? '#fbbf24' : 'var(--text-muted)',
-                backgroundColor: isActive ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
-                border: isActive ? '1px solid rgba(245, 158, 11, 0.25)' : '1px solid transparent',
+                gap: '10px',
+                padding: '10px 12px',
+                borderRadius: '6px',
+                border: 'none',
+                background: isActive
+                  ? 'linear-gradient(90deg, rgba(212,175,55,0.12), rgba(212,175,55,0.04))'
+                  : 'transparent',
                 cursor: 'pointer',
+                transition: 'all 0.2s',
+                marginBottom: '2px',
                 textAlign: 'left',
-                width: '100%',
-                transition: 'all 0.15s ease'
+                position: 'relative',
+              }}
+              onMouseEnter={e => {
+                if (!isActive) e.currentTarget.style.background = 'rgba(212,175,55,0.06)';
+              }}
+              onMouseLeave={e => {
+                if (!isActive) e.currentTarget.style.background = 'transparent';
               }}
             >
-              <Icon size={18} color={isActive ? '#f59e0b' : 'var(--text-faint)'} />
-              <span>{item.label}</span>
+              {/* Active indicator */}
+              {isActive && (
+                <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: '25%',
+                  bottom: '25%',
+                  width: '2px',
+                  background: 'var(--gold-primary)',
+                  borderRadius: '0 2px 2px 0',
+                }} />
+              )}
+
+              {/* Roman numeral */}
+              <span style={{
+                fontFamily: 'var(--font-cinzel)',
+                fontSize: '0.6rem',
+                color: isActive ? 'var(--gold-aged)' : 'var(--text-faint)',
+                width: '16px',
+                flexShrink: 0,
+                textAlign: 'right',
+              }}>{item.roman}</span>
+
+              {/* Icon */}
+              <Icon
+                size={16}
+                color={isActive ? 'var(--gold-primary)' : 'var(--text-faint)'}
+                strokeWidth={isActive ? 2 : 1.5}
+              />
+
+              {/* Labels */}
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontFamily: 'var(--font-cinzel)',
+                  fontSize: '0.7rem',
+                  fontWeight: isActive ? 700 : 500,
+                  letterSpacing: '0.08em',
+                  color: isActive ? 'var(--gold-primary)' : 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                }}>{item.latin}</div>
+                <div style={{
+                  fontSize: '0.62rem',
+                  color: isActive ? 'var(--gold-aged)' : 'var(--text-faint)',
+                  marginTop: '1px',
+                }}>{item.label}</div>
+              </div>
+
+              {isActive && <ChevronRight size={12} color="var(--gold-aged)" />}
             </button>
           );
         })}
+      </div>
 
-        <div style={{ marginTop: '24px', fontSize: '11px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '1px', padding: '6px 12px', marginBottom: '4px' }}>
-          Developer Resources
-        </div>
-
+      {/* Footer — Citizen Identity Plate */}
+      <div style={{
+        padding: '16px 16px 20px',
+        borderTop: '1px solid rgba(212,175,55,0.12)',
+      }}>
+        {/* External link */}
         <a
           href="/swagger-ui/index.html"
           target="_blank"
@@ -99,89 +202,83 @@ export function Navbar({ currentTab, setCurrentTab }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 14px',
-            borderRadius: '10px',
-            fontSize: '13px',
-            color: 'var(--text-muted)',
+            gap: '8px',
+            padding: '8px 10px',
+            borderRadius: '6px',
+            background: 'rgba(212,175,55,0.04)',
+            border: '1px solid rgba(212,175,55,0.1)',
+            color: 'var(--text-faint)',
             textDecoration: 'none',
-            border: '1px solid var(--border-subtle)',
-            backgroundColor: 'rgba(255, 255, 255, 0.02)'
+            marginBottom: '10px',
+            transition: 'all 0.2s',
+            fontFamily: 'var(--font-cinzel)',
+            fontSize: '0.6rem',
+            letterSpacing: '0.1em',
           }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.3)'; e.currentTarget.style.color = 'var(--gold-aged)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,0.1)'; e.currentTarget.style.color = 'var(--text-faint)'; }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '15px' }}>⚡</span> Swagger API Docs
-          </span>
-          <ExternalLink size={14} color="var(--text-faint)" />
+          <BookOpen size={12} />
+          API Codex (Swagger)
         </a>
 
-        <a
-          href="/guide.html"
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 14px',
-            borderRadius: '10px',
-            fontSize: '13px',
-            color: 'var(--text-muted)',
-            textDecoration: 'none',
-            border: '1px solid var(--border-subtle)',
-            backgroundColor: 'rgba(255, 255, 255, 0.02)',
-            marginTop: '6px'
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '15px' }}>📖</span> 1-Click Guide
-          </span>
-          <ExternalLink size={14} color="var(--text-faint)" />
-        </a>
-      </nav>
-
-      {/* User Session Footer */}
-      <div style={{ padding: '16px', borderTop: '1px solid var(--border-subtle)', background: 'rgba(0, 0, 0, 0.2)' }}>
-        <div 
-          onClick={() => setCurrentTab('account')}
-          style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', cursor: 'pointer' }}
-          title="Click to manage your account"
-        >
-          <div style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: '50%', 
-            background: '#272732', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
+        {/* User plate */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '10px',
+          background: 'rgba(212,175,55,0.04)',
+          border: '1px solid rgba(212,175,55,0.12)',
+          borderRadius: '8px',
+        }}>
+          <div style={{
+            width: '34px', height: '34px',
+            background: 'linear-gradient(135deg, var(--gold-bronze), var(--gold-aged))',
+            borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            fontFamily: 'var(--font-cinzel)',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            color: '#06060a',
           }}>
-            <UserIcon size={18} color="#f59e0b" />
+            {(user.username || user.email || 'U')[0].toUpperCase()}
           </div>
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              {user?.username || 'User'}
-            </div>
-            <div style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
-              {user?.roles?.map(r => (
-                <span key={r} className="badge badge-gold" style={{ fontSize: '9px', padding: '1px 5px' }}>
-                  {r}
-                </span>
-              ))}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--text-heading)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>{user.username || user.email}</div>
+            <div style={{ marginTop: '2px' }}>
+              <RoleBadge role={primaryRole} />
             </div>
           </div>
+          <button
+            onClick={logout}
+            title="Logout"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              color: 'var(--text-faint)',
+              borderRadius: '4px',
+              transition: 'color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--status-danger)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-faint)'}
+          >
+            <LogOut size={15} />
+          </button>
         </div>
-
-        <button 
-          onClick={logout}
-          className="btn btn-secondary btn-sm"
-          style={{ width: '100%', justifyContent: 'center', gap: '8px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-        >
-          <LogOut size={14} />
-          Sign Out
-        </button>
       </div>
-    </aside>
+    </nav>
   );
 }
