@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { usersApi, rolesApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { 
-  WaxSealIcon, 
-  GreekColumnIcon, 
-  AegisShieldIcon, 
-  RoleBadge 
-} from '../components/ClassicalIcons';
+import { RoleBadge } from '../components/ClassicalIcons';
 import { 
   Users, 
   Search, 
-  Filter, 
-  UserPlus, 
-  Shield, 
   Trash2, 
   CheckCircle, 
   XCircle, 
   Eye, 
   X, 
   Smartphone, 
-  AlertCircle 
+  AlertCircle,
+  Shield
 } from 'lucide-react';
 
 export function UsersPage() {
@@ -64,7 +57,7 @@ export function UsersPage() {
         setTotalElements(res.data.totalElements || 0);
       }
     } catch (err) {
-      console.error('Failed to load citizens roster:', err);
+      console.error('Failed to load user directory:', err);
     } finally {
       setLoading(false);
     }
@@ -113,7 +106,7 @@ export function UsersPage() {
     setModalSuccess(null);
     try {
       await usersApi.assignRole(selectedUser.id, targetRole);
-      setModalSuccess(`Dignity '${targetRole}' conferred successfully!`);
+      setModalSuccess(`Role '${targetRole}' assigned successfully!`);
       loadUsers();
       setTimeout(() => {
         setRoleModal(false);
@@ -130,7 +123,7 @@ export function UsersPage() {
       loadUsers();
       setStatusModal(false);
     } catch (err) {
-      alert('Status alteration failed: ' + err.message);
+      alert('Status update failed: ' + err.message);
     }
   };
 
@@ -140,52 +133,47 @@ export function UsersPage() {
       loadUsers();
       setDeleteModal(false);
     } catch (err) {
-      alert('Soft deletion failed: ' + err.message);
+      alert('Soft delete failed: ' + err.message);
     }
   };
 
   return (
     <div className="fade-in">
       {/* ─── PAGE HEADER ─── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-            <Users size={22} color="var(--gold-primary)" />
-            <h1 className="page-title">DIRECTORUM CIVIUM</h1>
-          </div>
+          <h1 className="page-title">USER DIRECTORY</h1>
           <p className="page-subtitle">
-            The imperial census of registered citizens — oversee dignities, inspect active tesserae, and regulate standing.
+            Inspect accounts, manage role assignments, examine active device sessions, and supervise account status.
           </p>
           <div className="page-title-line" />
         </div>
       </div>
 
       {/* ─── FILTER AND SEARCH FORUM ─── */}
-      <div className="card" style={{ padding: '16px 20px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Classical Search Input */}
-          <div className="search-bar" style={{ flex: 1, minWidth: '260px' }}>
-            <Search size={16} color="var(--gold-aged)" />
+      <div className="card" style={{ padding: '14px 18px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="search-bar" style={{ flex: 1, minWidth: '240px' }}>
+            <Search size={15} color="var(--text-muted)" />
             <input
               type="text"
-              placeholder="Search by citizen username or email..."
+              placeholder="Search by username or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Status Filter Chips */}
           <div style={{ display: 'flex', gap: '6px' }}>
             {[
-              { id: '', label: 'Omnes (All)' },
-              { id: 'ACTIVE', label: 'Stabilis (Active)' },
-              { id: 'SUSPENDED', label: 'Interdictus (Suspended)' }
+              { id: '', label: 'All Statuses' },
+              { id: 'ACTIVE', label: 'Active' },
+              { id: 'SUSPENDED', label: 'Suspended' }
             ].map(st => (
               <button
                 key={st.id}
                 onClick={() => setStatusFilter(st.id)}
                 className={`btn btn-sm ${statusFilter === st.id ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ fontSize: '0.62rem' }}
+                style={{ fontSize: '0.72rem' }}
               >
                 {st.label}
               </button>
@@ -194,35 +182,31 @@ export function UsersPage() {
         </div>
       </div>
 
-      {/* ─── CENSUS DATA TABLE ─── */}
+      {/* ─── DATA TABLE ─── */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Civis (Citizen)</th>
+                <th>User Account</th>
                 <th>Status</th>
-                <th>Tituli Dignitatis</th>
-                <th>Inscriptio (Created)</th>
-                <th style={{ textAlign: 'right' }}>Actiones</th>
+                <th>Assigned Roles</th>
+                <th>Created Date</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
-                    <span className="spinner-lg spinner" style={{ display: 'block', margin: '0 auto 16px' }} />
-                    <span style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '1.1rem' }}>
-                      Consulting the Census Rolls...
-                    </span>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>
+                    <span className="spinner" style={{ display: 'block', margin: '0 auto 10px' }} />
+                    <span>Loading directory...</span>
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '60px', color: 'var(--text-faint)' }}>
-                    <p style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '1.05rem' }}>
-                      Nulli cives inventi — No matching citizens inscribed in the codex.
-                    </p>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '50px', color: 'var(--text-faint)' }}>
+                    No matching user accounts found.
                   </td>
                 </tr>
               ) : (
@@ -231,17 +215,16 @@ export function UsersPage() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{
-                          width: '36px',
-                          height: '36px',
+                          width: '34px',
+                          height: '34px',
                           borderRadius: '50%',
                           background: 'linear-gradient(135deg, var(--gold-bronze), var(--gold-aged))',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontFamily: 'var(--font-cinzel)',
                           fontWeight: 700,
                           fontSize: '0.8rem',
-                          color: '#06060a'
+                          color: '#08080b'
                         }}>
                           {u.username ? u.username[0].toUpperCase() : 'U'}
                         </div>
@@ -249,7 +232,7 @@ export function UsersPage() {
                           <div style={{ fontWeight: 600, color: 'var(--text-heading)' }}>
                             {u.firstName ? `${u.firstName} ${u.lastName}` : u.username}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                             {u.email}
                           </div>
                         </div>
@@ -257,7 +240,7 @@ export function UsersPage() {
                     </td>
                     <td>
                       <span className={`badge ${u.status === 'ACTIVE' ? 'badge-active' : 'badge-danger'}`}>
-                        {u.status === 'ACTIVE' ? 'Stabilis' : 'Interdictus'}
+                        {u.status}
                       </span>
                     </td>
                     <td>
@@ -275,24 +258,24 @@ export function UsersPage() {
                         <button
                           onClick={() => openUserDetail(u)}
                           className="btn btn-secondary btn-sm"
-                          title="Inspect Details & Sessions"
+                          title="View Details & Sessions"
                         >
                           <Eye size={12} />
-                          <span>Inspect</span>
+                          <span>Details</span>
                         </button>
                         <button
                           onClick={() => { setSelectedUser(u); setRoleModal(true); }}
                           className="btn btn-secondary btn-sm"
-                          title="Confer Dignities"
+                          title="Assign Roles"
                         >
                           <Shield size={12} color="var(--gold-primary)" />
-                          <span>Dignitates</span>
+                          <span>Roles</span>
                         </button>
                         <button
                           onClick={() => { setSelectedUser(u); setStatusModal(true); }}
                           className="btn btn-ghost btn-sm"
-                          title="Alter Standing"
-                          style={{ border: '1px solid var(--border-subtle)' }}
+                          title="Change Status"
+                          style={{ border: 'var(--border-subtle)' }}
                         >
                           Status
                         </button>
@@ -300,7 +283,7 @@ export function UsersPage() {
                           <button
                             onClick={() => { setSelectedUser(u); setDeleteModal(true); }}
                             className="btn btn-danger btn-sm"
-                            title="Soft Delete Citizen"
+                            title="Soft Delete User"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -315,37 +298,37 @@ export function UsersPage() {
         </div>
       </div>
 
-      {/* ─── ROMAN PAGINATION FOOTER ─── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-        <div>Census: <strong>{totalElements}</strong> citizens registered</div>
+      {/* ─── PAGINATION ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+        <div>Total: <strong>{totalElements}</strong> accounts</div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             disabled={page === 0}
             onClick={() => setPage(p => Math.max(0, p - 1))}
             className="btn btn-secondary btn-sm"
           >
-            ← Retro
+            Previous
           </button>
-          <span style={{ padding: '5px 12px', background: 'var(--bg-surface)', borderRadius: '4px', border: '1px solid var(--border-subtle)', fontFamily: 'var(--font-cinzel)', fontSize: '0.7rem' }}>
-            Tabula {page + 1}
+          <span style={{ padding: '4px 10px', background: 'var(--bg-surface)', borderRadius: '4px', border: 'var(--border-subtle)', fontSize: '0.75rem' }}>
+            Page {page + 1}
           </span>
           <button
             disabled={(page + 1) * size >= totalElements}
             onClick={() => setPage(p => p + 1)}
             className="btn btn-secondary btn-sm"
           >
-            Ultra →
+            Next
           </button>
         </div>
       </div>
 
-      {/* ─── MODAL 1: CITIZEN DETAIL & SESSIONS ─── */}
+      {/* ─── MODAL 1: USER DETAIL & SESSIONS ─── */}
       {detailModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setDetailModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '640px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold-bronze), var(--gold-aged))', color: '#06060a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-cinzel)', fontWeight: 800 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold-bronze), var(--gold-aged))', color: '#08080b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
                   {selectedUser.username[0].toUpperCase()}
                 </div>
                 <div>
@@ -354,33 +337,33 @@ export function UsersPage() {
                 </div>
               </div>
               <button onClick={() => setDetailModal(false)} className="btn-ghost" style={{ cursor: 'pointer', padding: '4px' }}>
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             <div className="modal-body">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Smartphone size={16} color="var(--gold-primary)" />
-                <h4 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-                  Active Tesserae Sessions ({userSessions.length} / 5 max)
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <Smartphone size={15} color="var(--gold-primary)" />
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                  Active Refresh Sessions ({userSessions.length} / 5 max)
                 </h4>
               </div>
 
               {loadingDetail ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Loading sessions...</div>
               ) : userSessions.length === 0 ? (
-                <div style={{ padding: '16px', background: 'var(--bg-void)', borderRadius: '6px', color: 'var(--text-faint)', fontSize: '0.8rem' }}>
-                  No active refresh token sessions currently recorded for this citizen.
+                <div style={{ padding: '14px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', color: 'var(--text-faint)', fontSize: '0.8rem' }}>
+                  No active refresh sessions found for this user.
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {userSessions.map(s => (
-                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-void)', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.15)' }}>
+                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', border: 'var(--border-subtle)' }}>
                       <div>
                         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-heading)' }}>
-                          {s.deviceInfo || 'Standard Browser'}
+                          {s.deviceInfo || 'Standard Web Browser'}
                         </div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-faint)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
                           IP: {s.ipAddress || '127.0.0.1'} · Expires: {new Date(s.expiresAt).toLocaleDateString()}
                         </div>
                       </div>
@@ -388,26 +371,26 @@ export function UsersPage() {
                         onClick={() => handleRevokeSession(s.id)}
                         className="btn btn-danger btn-sm"
                       >
-                        Banish
+                        Revoke
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              <h4 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-heading)', marginTop: '24px', marginBottom: '12px' }}>
-                Recent Security Audit Inscriptions
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-heading)', marginTop: '20px', marginBottom: '10px' }}>
+                Recent Security Audit Logs
               </h4>
 
               {userLogs.length === 0 ? (
-                <div style={{ padding: '16px', background: 'var(--bg-void)', borderRadius: '6px', color: 'var(--text-faint)', fontSize: '0.8rem' }}>
-                  No recent audit records inscribed.
+                <div style={{ padding: '14px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', color: 'var(--text-faint)', fontSize: '0.8rem' }}>
+                  No recent audit records.
                 </div>
               ) : (
-                <div style={{ maxHeight: '180px', overflowY: 'auto', background: 'var(--bg-void)', borderRadius: '6px', padding: '8px' }}>
+                <div style={{ maxHeight: '160px', overflowY: 'auto', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', padding: '6px' }}>
                   {userLogs.map(l => (
-                    <div key={l.id} style={{ padding: '8px 10px', borderBottom: '1px solid rgba(212,175,55,0.08)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                      <span className="badge badge-imperator" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem' }}>{l.action}</span>
+                    <div key={l.id} style={{ padding: '6px 10px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                      <span className="badge badge-info" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem' }}>{l.action}</span>
                       <span style={{ color: 'var(--text-faint)' }}>{new Date(l.timestamp).toLocaleString()}</span>
                     </div>
                   ))}
@@ -418,48 +401,45 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* ─── MODAL 2: CONFER DIGNITIES (ROLES) ─── */}
+      {/* ─── MODAL 2: MANAGE ROLES ─── */}
       {roleModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setRoleModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <WaxSealIcon size={20} color="var(--gold-primary)" />
-                <h3 className="modal-title">
-                  Confer Dignity: {selectedUser.username}
-                </h3>
-              </div>
+              <h3 className="modal-title">
+                Manage Roles: {selectedUser.username}
+              </h3>
               <button onClick={() => setRoleModal(false)} className="btn-ghost" style={{ cursor: 'pointer', padding: '4px' }}>
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             <div className="modal-body">
               {modalError && (
-                <div style={{ padding: '10px 14px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)', borderRadius: '6px', color: 'var(--status-danger)', fontSize: '0.8rem', marginBottom: '16px' }}>
+                <div style={{ padding: '10px 14px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)', borderRadius: 'var(--radius-md)', color: 'var(--status-danger)', fontSize: '0.8rem', marginBottom: '14px' }}>
                   {modalError}
                 </div>
               )}
               {modalSuccess && (
-                <div style={{ padding: '10px 14px', background: 'var(--status-active-bg)', border: '1px solid var(--status-active)', borderRadius: '6px', color: 'var(--status-active)', fontSize: '0.8rem', marginBottom: '16px' }}>
+                <div style={{ padding: '10px 14px', background: 'var(--status-active-bg)', border: '1px solid var(--status-active)', borderRadius: 'var(--radius-md)', color: 'var(--status-active)', fontSize: '0.8rem', marginBottom: '14px' }}>
                   {modalSuccess}
                 </div>
               )}
 
-              <div style={{ marginBottom: '16px' }}>
-                <label className="roman-label" style={{ display: 'block', marginBottom: '8px' }}>
-                  Currently Conferred Dignities:
+              <div style={{ marginBottom: '14px' }}>
+                <label className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
+                  Currently Assigned Roles:
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {selectedUser.roles?.map(r => (
                     <RoleBadge key={r} role={r} />
                   ))}
                 </div>
               </div>
 
-              <form onSubmit={handleAssignRole} style={{ marginTop: '20px' }}>
+              <form onSubmit={handleAssignRole} style={{ marginTop: '16px' }}>
                 <label className="input-label" style={{ display: 'block', marginBottom: '6px' }}>
-                  Confer Additional Dignity:
+                  Assign Additional Role:
                 </label>
                 <select
                   className="input-field"
@@ -468,20 +448,20 @@ export function UsersPage() {
                   required
                   style={{ marginBottom: '16px' }}
                 >
-                  <option value="">Select a title to confer...</option>
+                  <option value="">Select a role to assign...</option>
                   {availableRoles.map(r => (
                     <option key={r.id} value={r.name}>
-                      {r.name} {r.isSystem ? '(System Dignity)' : '(Custom Dignity)'}
+                      {r.name} {r.isSystem ? '(System Role)' : ''}
                     </option>
                   ))}
                 </select>
 
                 <div className="modal-footer" style={{ padding: 0 }}>
                   <button type="button" onClick={() => setRoleModal(false)} className="btn btn-ghost">
-                    Abrogare
+                    Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Confer Dignity
+                    Assign Role
                   </button>
                 </div>
               </form>
@@ -490,36 +470,36 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* ─── MODAL 3: ALTER STANDING (STATUS) ─── */}
+      {/* ─── MODAL 3: STATUS ─── */}
       {statusModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setStatusModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="modal-title">Alter Citizen Standing: {selectedUser.username}</h3>
+              <h3 className="modal-title">Change Status: {selectedUser.username}</h3>
             </div>
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-body)' }}>
-                Current standing is <strong style={{ color: 'var(--gold-bright)' }}>{selectedUser.status}</strong>. Select the updated standing decree:
+                Current status is <strong style={{ color: 'var(--gold-bright)' }}>{selectedUser.status}</strong>. Choose updated status:
               </p>
               <button
                 onClick={() => handleStatusChange('ACTIVE')}
                 className="btn btn-secondary"
                 style={{ borderColor: 'var(--status-active)', color: 'var(--status-active)', justifyContent: 'flex-start' }}
               >
-                <CheckCircle size={16} />
-                <span>Declare STABILIS (Active admission and token renewals allowed)</span>
+                <CheckCircle size={15} />
+                <span>Set to ACTIVE (Allow login and session refreshes)</span>
               </button>
               <button
                 onClick={() => handleStatusChange('SUSPENDED')}
                 className="btn btn-secondary"
                 style={{ borderColor: 'var(--status-danger)', color: 'var(--status-danger)', justifyContent: 'flex-start' }}
               >
-                <XCircle size={16} />
-                <span>Declare INTERDICTUS (Suspended — block all logins immediately)</span>
+                <XCircle size={15} />
+                <span>Set to SUSPENDED (Block logins immediately)</span>
               </button>
-              <div className="modal-footer" style={{ padding: 0, marginTop: '8px' }}>
+              <div className="modal-footer" style={{ padding: 0, marginTop: '6px' }}>
                 <button onClick={() => setStatusModal(false)} className="btn btn-ghost">
-                  Claudere
+                  Close
                 </button>
               </div>
             </div>
@@ -527,29 +507,29 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* ─── MODAL 4: SOFT DELETION CONFIRMATION ─── */}
+      {/* ─── MODAL 4: SOFT DELETE ─── */}
       {deleteModal && selectedUser && (
         <div className="modal-overlay" onClick={() => setDeleteModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title" style={{ color: 'var(--status-danger)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertCircle size={20} />
+                <AlertCircle size={18} />
                 Confirm Soft Deletion
               </h3>
             </div>
             <div className="modal-body">
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-body)', marginBottom: '16px', lineHeight: 1.6 }}>
-                Are you certain you wish to execute soft-deletion on citizen <strong>{selectedUser.username}</strong> ({selectedUser.email})?
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-body)', marginBottom: '14px', lineHeight: 1.5 }}>
+                Are you sure you want to soft-delete user <strong>{selectedUser.username}</strong> ({selectedUser.email})?
               </p>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '24px', background: 'var(--bg-void)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.1)' }}>
-                In accordance with BR-15, this sets the <code>deleted_at</code> timestamp, immediately severs all active tokens, and initiates the 30-day retention window.
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '20px', background: 'var(--bg-elevated)', padding: '12px', borderRadius: 'var(--radius-md)' }}>
+                In accordance with Rule BR-15, this sets <code>deleted_at</code>, immediately revokes all active sessions, and initiates the 30-day retention window.
               </div>
               <div className="modal-footer" style={{ padding: 0 }}>
                 <button onClick={() => setDeleteModal(false)} className="btn btn-ghost">
-                  Abrogare
+                  Cancel
                 </button>
                 <button onClick={handleDeleteUser} className="btn btn-danger">
-                  Delete Citizen Account
+                  Delete User Account
                 </button>
               </div>
             </div>

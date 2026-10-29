@@ -1,70 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { rolesApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { 
-  AegisShieldIcon, 
-  LaurelWreathIcon, 
-  GreekColumnIcon, 
-  WaxSealIcon, 
-  RoleBadge, 
-  LaurelDivider 
-} from '../components/ClassicalIcons';
+import { RoleBadge } from '../components/ClassicalIcons';
 import { 
   KeyRound, 
   Plus, 
   ShieldCheck, 
-  Lock, 
   Trash2, 
   Edit3, 
   X, 
   Check, 
   Crown,
-  ChevronDown,
-  Layers,
-  Sparkles
+  Shield
 } from 'lucide-react';
 
-/* ─── CLASSICAL PERMISSION TAXONOMY ─── */
 const PERMISSION_CATEGORIES = [
   {
-    category: 'Senatus Consultum (Role & Policy)',
+    category: 'Role & Policy Management',
     permissions: [
-      { name: 'roles:read', desc: 'Inspect defined dignities and privilege sets' },
-      { name: 'roles:write', desc: 'Inscribe new titles or alter authorities' },
-      { name: 'roles:delete', desc: 'Dissolve custom non-system roles' },
+      { name: 'roles:read', desc: 'List and view defined roles and permissions' },
+      { name: 'roles:write', desc: 'Create new custom roles and update authorities' },
+      { name: 'roles:delete', desc: 'Delete custom non-system roles' },
     ]
   },
   {
-    category: 'Potestas Civium (Citizen Management)',
+    category: 'User Management',
     permissions: [
-      { name: 'users:read', desc: 'Inspect citizen census and profiles' },
-      { name: 'users:write', desc: 'Inscribe or update citizen credentials' },
-      { name: 'users:status', desc: 'Alter citizen status (Stabilis / Interdictus)' },
-      { name: 'users:delete', desc: 'Initiate 30-day soft deletion protocol' },
+      { name: 'users:read', desc: 'Inspect user accounts and profile data' },
+      { name: 'users:write', desc: 'Create or update user account details' },
+      { name: 'users:status', desc: 'Change account status (Active / Suspended)' },
+      { name: 'users:delete', desc: 'Initiate 30-day soft deletion lifecycle' },
     ]
   },
   {
-    category: 'Tessera Sessionis (Token & Session)',
+    category: 'Session & Token Management',
     permissions: [
-      { name: 'sessions:read', desc: 'Inspect active device tokens across the realm' },
-      { name: 'sessions:delete', desc: 'Revoke remote sessions and banish tokens' },
+      { name: 'sessions:read', desc: 'View active device sessions across the system' },
+      { name: 'sessions:delete', desc: 'Revoke active refresh sessions and tokens' },
     ]
   },
   {
-    category: 'Codex Annales (Audit Chronicle)',
+    category: 'Audit Logs',
     permissions: [
-      { name: 'audit:read', desc: 'Examine immutable security event scrolls' },
+      { name: 'audit:read', desc: 'Read immutable security event logs' },
     ]
   }
 ];
 
-const ALL_PERMISSIONS = PERMISSION_CATEGORIES.flatMap(c => c.permissions);
-
 const HIERARCHY_ORDER = {
-  SUPER_ADMIN: { rank: 1, latin: 'Imperator', desc: 'Supreme Sovereign authority over all decrees, keys, and citizens.' },
-  ADMIN:       { rank: 2, latin: 'Magistratus', desc: 'Executive governance of citizen rosters, sessions, and roles.' },
-  MODERATOR:   { rank: 3, latin: 'Tribunus', desc: 'Judicial supervision, status moderation, and audit review.' },
-  USER:        { rank: 4, latin: 'Civis', desc: 'Standard citizen with self-service identity and session privileges.' }
+  SUPER_ADMIN: { rank: 1, title: 'Super Admin', desc: 'Full sovereign control over all system policies, roles, and accounts.' },
+  ADMIN:       { rank: 2, title: 'Admin',       desc: 'Executive management of user accounts, sessions, and permissions.' },
+  MODERATOR:   { rank: 3, title: 'Moderator',   desc: 'User inspection, account status moderation, and audit review.' },
+  USER:        { rank: 4, title: 'User',        desc: 'Standard authenticated account with self-service identity management.' }
 };
 
 export function RolesPage() {
@@ -89,7 +76,7 @@ export function RolesPage() {
       const res = await rolesApi.getRoles();
       if (res.data) setRoles(res.data);
     } catch (err) {
-      console.error('Failed to load cursus honorum:', err);
+      console.error('Failed to load roles:', err);
     } finally {
       setLoading(false);
     }
@@ -149,20 +136,19 @@ export function RolesPage() {
 
   const handleDeleteRole = async (role) => {
     if (role.isSystem) {
-      alert('Decree BR-17: Built-in system dignities are perpetual and cannot be dissolved.');
+      alert('Built-in system roles cannot be deleted (Rule BR-17).');
       return;
     }
-    if (!window.confirm(`Dissolve and purge title '${role.name}' from the imperial codex?`)) return;
+    if (!window.confirm(`Are you sure you want to delete role '${role.name}'?`)) return;
 
     try {
       await rolesApi.deleteRole(role.id);
       loadRoles();
     } catch (err) {
-      alert('Dissolution failed: ' + err.message);
+      alert('Delete failed: ' + err.message);
     }
   };
 
-  // Sort roles into hierarchy (SUPER_ADMIN first, then ADMIN, MODERATOR, USER, then custom roles)
   const sortedRoles = [...roles].sort((a, b) => {
     const rankA = HIERARCHY_ORDER[a.name]?.rank || 99;
     const rankB = HIERARCHY_ORDER[b.name]?.rank || 99;
@@ -172,14 +158,11 @@ export function RolesPage() {
   return (
     <div className="fade-in">
       {/* ─── PAGE HEADER ─── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-            <GreekColumnIcon size={22} color="var(--gold-primary)" />
-            <h1 className="page-title">CURSUS HONORUM</h1>
-          </div>
+          <h1 className="page-title">ROLES &amp; PERMISSIONS</h1>
           <p className="page-subtitle">
-            The aristocratic ladder of imperial offices, sovereign privileges, and granular authorizations.
+            Configure Role-Based Access Control (RBAC), inspect permissions, and supervise authority tiers.
           </p>
           <div className="page-title-line" />
         </div>
@@ -196,26 +179,24 @@ export function RolesPage() {
             className="btn btn-primary"
           >
             <Plus size={15} />
-            <span>Inscribe New Dignity</span>
+            <span>Create Custom Role</span>
           </button>
         )}
       </div>
 
-      {/* ─── HIERARCHY PEDIGREE OVERVIEW CARD ─── */}
-      <div className="card" style={{ marginBottom: '32px', padding: '24px 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-          <Crown size={18} color="var(--gold-primary)" />
-          <h2 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Lineage of Sovereign Authority
+      {/* ─── HIERARCHY TIER CARDS ─── */}
+      <div className="card" style={{ marginBottom: '28px', padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <Crown size={16} color="var(--gold-primary)" />
+          <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-heading)', textTransform: 'uppercase' }}>
+            Authority Hierarchy
           </h2>
         </div>
 
-        {/* Cursus Honorum Tree Steps */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '12px',
-          position: 'relative'
         }}>
           {['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'USER'].map((rName, idx) => {
             const h = HIERARCHY_ORDER[rName];
@@ -224,20 +205,20 @@ export function RolesPage() {
                 key={rName}
                 style={{
                   background: 'var(--bg-elevated)',
-                  border: '1px solid rgba(212,175,55,0.2)',
-                  borderTop: `3px solid ${idx === 0 ? 'var(--gold-bright)' : idx === 1 ? '#60a5fa' : idx === 2 ? '#c084fc' : 'var(--status-active)'}`,
+                  border: 'var(--border-subtle)',
+                  borderTop: `2px solid ${idx === 0 ? 'var(--gold-bright)' : idx === 1 ? '#60a5fa' : idx === 2 ? '#c084fc' : 'var(--status-active)'}`,
                   borderRadius: 'var(--radius-md)',
-                  padding: '16px 14px'
+                  padding: '14px'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span className="roman-label">Tier {['I', 'II', 'III', 'IV'][idx]}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>Level {idx + 1}</span>
                   <RoleBadge role={rName} />
                 </div>
-                <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-                  {h.latin}
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                  {h.title}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4 }}>
                   {h.desc}
                 </div>
               </div>
@@ -247,17 +228,14 @@ export function RolesPage() {
       </div>
 
       {/* ─── ROLES LIST GRID ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '18px' }}>
         {loading ? (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
-            <span className="spinner-lg spinner" style={{ display: 'block', margin: '0 auto 16px' }} />
-            <span style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '1.1rem' }}>
-              Consulting the Senatus Rolls...
-            </span>
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>
+            <span className="spinner" style={{ display: 'block', margin: '0 auto 12px' }} />
+            <span>Loading roles...</span>
           </div>
         ) : sortedRoles.map(role => {
           const isSystem = role.isSystem;
-          const hierarchyInfo = HIERARCHY_ORDER[role.name];
 
           return (
             <div
@@ -267,76 +245,67 @@ export function RolesPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                borderLeft: isSystem ? '3px solid var(--gold-primary)' : '3px solid var(--gold-hairline)'
+                borderLeft: isSystem ? '2px solid var(--gold-primary)' : '2px solid rgba(255,255,255,0.1)'
               }}
             >
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
-                      width: '40px',
-                      height: '40px',
+                      width: '36px',
+                      height: '36px',
                       borderRadius: '8px',
-                      background: isSystem ? 'rgba(212,175,55,0.15)' : 'rgba(59,130,246,0.15)',
-                      border: `1px solid ${isSystem ? 'rgba(212,175,55,0.3)' : 'rgba(59,130,246,0.3)'}`,
+                      background: isSystem ? 'var(--gold-faint)' : 'rgba(59,130,246,0.1)',
+                      border: `1px solid ${isSystem ? 'var(--border-gold)' : 'rgba(59,130,246,0.2)'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: isSystem ? 'var(--gold-bright)' : '#60a5fa'
                     }}>
-                      <WaxSealIcon size={20} color={isSystem ? 'var(--gold-bright)' : '#60a5fa'} />
+                      <KeyRound size={17} />
                     </div>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <h3 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-                          {role.name}
-                        </h3>
-                        {hierarchyInfo && (
-                          <span style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--gold-aged)' }}>
-                            ({hierarchyInfo.latin})
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-faint)', marginTop: '2px' }}>
-                        {isSystem ? 'Perpetual System Dignity (BR-17)' : 'Extraordinary Custom Inscription'}
+                      <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                        {role.name}
+                      </h3>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-faint)', marginTop: '1px' }}>
+                        {isSystem ? 'Built-in System Role (Rule BR-17)' : 'Custom Role'}
                       </div>
                     </div>
                   </div>
 
-                  <span className={`badge ${isSystem ? 'badge-imperator' : 'badge-info'}`}>
+                  <span className={`badge ${isSystem ? 'badge-gold' : 'badge-info'}`}>
                     {isSystem ? 'SYSTEM' : 'CUSTOM'}
                   </span>
                 </div>
 
                 <p style={{
-                  fontFamily: 'var(--font-cormorant)',
-                  fontStyle: 'italic',
-                  fontSize: '0.9rem',
-                  color: 'var(--text-body)',
-                  marginBottom: '16px',
-                  minHeight: '40px',
-                  lineHeight: 1.5
+                  fontSize: '0.82rem',
+                  color: 'var(--text-muted)',
+                  marginBottom: '14px',
+                  minHeight: '36px',
+                  lineHeight: 1.4
                 }}>
-                  {role.description || 'No formal decree inscribed.'}
+                  {role.description || 'No description provided.'}
                 </p>
 
                 {/* Granted Permissions */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span className="roman-label">Privilegia Inscripta:</span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Granted Permissions:</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
                       {role.permissions?.length || 0} permissions
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                     {role.permissions?.length === 0 ? (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-faint)', fontStyle: 'italic' }}>
-                        Civic base access only (no elevated authorities)
+                        Standard user access only
                       </span>
                     ) : (
                       role.permissions?.map(p => (
-                        <span key={p} className="badge badge-info" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem' }}>
+                        <span key={p} className="badge badge-info" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}>
                           {p}
                         </span>
                       ))
@@ -350,23 +319,23 @@ export function RolesPage() {
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '8px',
-                marginTop: '20px',
-                paddingTop: '16px',
-                borderTop: '1px solid rgba(212,175,55,0.1)'
+                marginTop: '16px',
+                paddingTop: '12px',
+                borderTop: 'var(--border-subtle)'
               }}>
                 {isSuperAdmin() && (
                   <>
                     <button onClick={() => openEditModal(role)} className="btn btn-secondary btn-sm">
-                      <Edit3 size={13} />
-                      <span>Aliter Privilegia</span>
+                      <Edit3 size={12} />
+                      <span>Edit Permissions</span>
                     </button>
                     {!isSystem && (
                       <button
                         onClick={() => handleDeleteRole(role)}
                         className="btn btn-danger btn-sm"
-                        title="Dissolve Custom Dignity"
+                        title="Delete Role"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={12} />
                       </button>
                     )}
                   </>
@@ -377,34 +346,31 @@ export function RolesPage() {
         })}
       </div>
 
-      {/* ─── MODAL: INSCRIBE NEW DIGNITY (CREATE ROLE) ─── */}
+      {/* ─── MODAL: CREATE ROLE ─── */}
       {createModal && (
         <div className="modal-overlay" onClick={() => setCreateModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '640px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <WaxSealIcon size={20} color="var(--gold-primary)" />
-                <h3 className="modal-title">Inscribere Novum Titulum (Create Role)</h3>
-              </div>
+              <h3 className="modal-title">Create Custom Role</h3>
               <button onClick={() => setCreateModal(false)} className="btn-ghost" style={{ cursor: 'pointer', padding: '4px' }}>
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handleCreateSubmit} className="modal-body">
               {formError && (
-                <div style={{ padding: '10px 14px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)', borderRadius: '6px', color: 'var(--status-danger)', fontSize: '0.8rem', marginBottom: '16px' }}>
+                <div style={{ padding: '10px 14px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)', borderRadius: 'var(--radius-md)', color: 'var(--status-danger)', fontSize: '0.8rem', marginBottom: '14px' }}>
                   {formError}
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div className="input-group">
-                  <label className="input-label">Nomen Tituli (Uppercase &amp; Underscores)</label>
+                  <label className="input-label">Role Name (Uppercase &amp; Underscores)</label>
                   <input
                     type="text"
                     className="input-field input-mono"
-                    placeholder="E.G. TRIBUNUS_AERARII"
+                    placeholder="e.g. AUDIT_INSPECTOR"
                     value={newRoleName}
                     onChange={e => setNewRoleName(e.target.value.toUpperCase())}
                     required
@@ -412,25 +378,25 @@ export function RolesPage() {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Descriptio Officii (Scope &amp; Mandate)</label>
+                  <label className="input-label">Role Description</label>
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="Describe the mandate and responsibilities of this dignity..."
+                    placeholder="Explain the scope and responsibilities of this role..."
                     value={newRoleDesc}
                     onChange={e => setNewRoleDesc(e.target.value)}
                   />
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <label className="input-label">Decerne Privilegia ({selectedPerms.length} Selected):</label>
-                  </div>
+                  <label className="input-label" style={{ display: 'block', marginBottom: '8px' }}>
+                    Select Permissions ({selectedPerms.length} selected):
+                  </label>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }}>
                     {PERMISSION_CATEGORIES.map(cat => (
                       <div key={cat.category}>
-                        <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.65rem', color: 'var(--gold-aged)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--gold-aged)', marginBottom: '6px', textTransform: 'uppercase' }}>
                           {cat.category}
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -441,31 +407,30 @@ export function RolesPage() {
                                 key={p.name}
                                 onClick={() => togglePerm(p.name)}
                                 style={{
-                                  padding: '8px 12px',
-                                  borderRadius: '6px',
-                                  border: isChecked ? '1px solid var(--gold-primary)' : '1px solid rgba(212,175,55,0.15)',
-                                  background: isChecked ? 'rgba(212,175,55,0.1)' : 'var(--bg-elevated)',
+                                  padding: '8px 10px',
+                                  borderRadius: 'var(--radius-sm)',
+                                  border: isChecked ? '1px solid var(--gold-primary)' : 'var(--border-subtle)',
+                                  background: isChecked ? 'var(--gold-faint)' : 'var(--bg-elevated)',
                                   cursor: 'pointer',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '8px',
-                                  transition: 'all 0.15s'
                                 }}
                               >
                                 <div style={{
-                                  width: '16px', height: '16px', borderRadius: '3px',
+                                  width: '15px', height: '15px', borderRadius: '3px',
                                   border: isChecked ? 'none' : '1px solid var(--text-faint)',
                                   background: isChecked ? 'var(--gold-primary)' : 'transparent',
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   flexShrink: 0
                                 }}>
-                                  {isChecked && <Check size={12} color="#06060a" strokeWidth={3} />}
+                                  {isChecked && <Check size={11} color="#08080b" strokeWidth={3} />}
                                 </div>
                                 <div style={{ minWidth: 0 }}>
-                                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: isChecked ? 'var(--gold-bright)' : 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
+                                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: isChecked ? 'var(--gold-bright)' : 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
                                     {p.name}
                                   </div>
-                                  <div style={{ fontSize: '0.62rem', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {p.desc}
                                   </div>
                                 </div>
@@ -479,12 +444,12 @@ export function RolesPage() {
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ marginTop: '20px', padding: 0 }}>
+              <div className="modal-footer" style={{ marginTop: '16px', padding: 0 }}>
                 <button type="button" onClick={() => setCreateModal(false)} className="btn btn-ghost">
-                  Abrogare
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Inscribe Titulum
+                  Create Role
                 </button>
               </div>
             </form>
@@ -492,30 +457,27 @@ export function RolesPage() {
         </div>
       )}
 
-      {/* ─── MODAL: MUTARE PRIVILEGIA (EDIT ROLE) ─── */}
+      {/* ─── MODAL: EDIT ROLE PERMISSIONS ─── */}
       {editModal && selectedRole && (
         <div className="modal-overlay" onClick={() => setEditModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '640px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <WaxSealIcon size={20} color="var(--gold-primary)" />
-                <h3 className="modal-title">Mutare Privilegia: {selectedRole.name}</h3>
-              </div>
+              <h3 className="modal-title">Edit Role: {selectedRole.name}</h3>
               <button onClick={() => setEditModal(false)} className="btn-ghost" style={{ cursor: 'pointer', padding: '4px' }}>
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handleEditSubmit} className="modal-body">
               {formError && (
-                <div style={{ padding: '10px 14px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)', borderRadius: '6px', color: 'var(--status-danger)', fontSize: '0.8rem', marginBottom: '16px' }}>
+                <div style={{ padding: '10px 14px', background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)', borderRadius: 'var(--radius-md)', color: 'var(--status-danger)', fontSize: '0.8rem', marginBottom: '14px' }}>
                   {formError}
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div className="input-group">
-                  <label className="input-label">Descriptio Officii</label>
+                  <label className="input-label">Role Description</label>
                   <input
                     type="text"
                     className="input-field"
@@ -525,14 +487,14 @@ export function RolesPage() {
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <label className="input-label">Manage Permissions ({selectedPerms.length} Selected):</label>
-                  </div>
+                  <label className="input-label" style={{ display: 'block', marginBottom: '8px' }}>
+                    Manage Permissions ({selectedPerms.length} selected):
+                  </label>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }}>
                     {PERMISSION_CATEGORIES.map(cat => (
                       <div key={cat.category}>
-                        <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.65rem', color: 'var(--gold-aged)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--gold-aged)', marginBottom: '6px', textTransform: 'uppercase' }}>
                           {cat.category}
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -543,31 +505,30 @@ export function RolesPage() {
                                 key={p.name}
                                 onClick={() => togglePerm(p.name)}
                                 style={{
-                                  padding: '8px 12px',
-                                  borderRadius: '6px',
-                                  border: isChecked ? '1px solid var(--gold-primary)' : '1px solid rgba(212,175,55,0.15)',
-                                  background: isChecked ? 'rgba(212,175,55,0.1)' : 'var(--bg-elevated)',
+                                  padding: '8px 10px',
+                                  borderRadius: 'var(--radius-sm)',
+                                  border: isChecked ? '1px solid var(--gold-primary)' : 'var(--border-subtle)',
+                                  background: isChecked ? 'var(--gold-faint)' : 'var(--bg-elevated)',
                                   cursor: 'pointer',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '8px',
-                                  transition: 'all 0.15s'
                                 }}
                               >
                                 <div style={{
-                                  width: '16px', height: '16px', borderRadius: '3px',
+                                  width: '15px', height: '15px', borderRadius: '3px',
                                   border: isChecked ? 'none' : '1px solid var(--text-faint)',
                                   background: isChecked ? 'var(--gold-primary)' : 'transparent',
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   flexShrink: 0
                                 }}>
-                                  {isChecked && <Check size={12} color="#06060a" strokeWidth={3} />}
+                                  {isChecked && <Check size={11} color="#08080b" strokeWidth={3} />}
                                 </div>
                                 <div style={{ minWidth: 0 }}>
-                                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: isChecked ? 'var(--gold-bright)' : 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
+                                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: isChecked ? 'var(--gold-bright)' : 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
                                     {p.name}
                                   </div>
-                                  <div style={{ fontSize: '0.62rem', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {p.desc}
                                   </div>
                                 </div>
@@ -581,12 +542,12 @@ export function RolesPage() {
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ marginTop: '20px', padding: 0 }}>
+              <div className="modal-footer" style={{ marginTop: '16px', padding: 0 }}>
                 <button type="button" onClick={() => setEditModal(false)} className="btn btn-ghost">
-                  Abrogare
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Conservare Decreta
+                  Save Changes
                 </button>
               </div>
             </form>

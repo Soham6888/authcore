@@ -1,9 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { AegisShieldIcon, LaurelWreathIcon } from '../components/ClassicalIcons';
+import { AegisShieldIcon } from '../components/ClassicalIcons';
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 
-/* ─── Password strength meter ─── */
 function passwordStrength(pw) {
   let score = 0;
   if (!pw) return 0;
@@ -15,9 +14,8 @@ function passwordStrength(pw) {
   return score;
 }
 
-const ROMAN_STRENGTH = ['I', 'II', 'III', 'IV', 'V'];
-const STRENGTH_LABELS = ['Infirma', 'Debilis', 'Media', 'Fortis', 'Optima'];
-const STRENGTH_COLORS = ['#ef4444', '#d97706', '#f59e0b', '#10b981', '#d4af37'];
+const STRENGTH_LABELS = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+const STRENGTH_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#d4af37'];
 
 function StrengthMeter({ password }) {
   const score = passwordStrength(password);
@@ -28,28 +26,26 @@ function StrengthMeter({ password }) {
         {[1,2,3,4,5].map(i => (
           <div key={i} style={{
             flex: 1, height: '3px', borderRadius: '2px',
-            background: score >= i ? STRENGTH_COLORS[score - 1] : 'rgba(255,255,255,0.1)',
+            background: score >= i ? STRENGTH_COLORS[score - 1] : 'rgba(255,255,255,0.08)',
             transition: 'background 0.3s',
           }} />
         ))}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{
-          fontFamily: 'var(--font-cinzel)',
-          fontSize: '0.58rem', color: STRENGTH_COLORS[score - 1] || 'var(--text-faint)',
-          letterSpacing: '0.1em',
+          fontSize: '0.72rem', fontWeight: 600,
+          color: STRENGTH_COLORS[score - 1] || 'var(--text-faint)'
         }}>
-          {score > 0 ? `${ROMAN_STRENGTH[score-1]}. ${STRENGTH_LABELS[score-1]}` : ''}
+          {score > 0 ? STRENGTH_LABELS[score - 1] : ''}
         </span>
-        <span style={{ fontSize: '0.6rem', color: 'var(--text-faint)' }}>
-          Vis Tessera
+        <span style={{ fontSize: '0.68rem', color: 'var(--text-faint)' }}>
+          Password Strength
         </span>
       </div>
     </div>
   );
 }
 
-/* ─── Input Field ─── */
 function InputField({ label, type = 'text', value, onChange, placeholder, showToggle, autoComplete }) {
   const [show, setShow] = useState(false);
   const actualType = (type === 'password' && show) ? 'text' : type;
@@ -64,19 +60,19 @@ function InputField({ label, type = 'text', value, onChange, placeholder, showTo
           onChange={onChange}
           placeholder={placeholder}
           autoComplete={autoComplete}
-          style={{ paddingRight: showToggle ? '40px' : '14px' }}
+          style={{ paddingRight: showToggle ? '38px' : '12px' }}
         />
         {showToggle && (
           <button
             type="button"
             onClick={() => setShow(v => !v)}
             style={{
-              position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-faint)',
+              position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
               display: 'flex', alignItems: 'center', padding: '2px',
             }}
           >
-            {show ? <EyeOff size={16} /> : <Eye size={16} />}
+            {show ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         )}
       </div>
@@ -84,21 +80,20 @@ function InputField({ label, type = 'text', value, onChange, placeholder, showTo
   );
 }
 
-/* ─── Alert ─── */
 function Alert({ message, type = 'error' }) {
   if (!message) return null;
   const isError = type === 'error';
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: '8px',
-      padding: '12px 14px',
+      padding: '10px 14px',
       background: isError ? 'var(--status-danger-bg)' : 'var(--status-active-bg)',
       border: `1px solid ${isError ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`,
-      borderRadius: '6px',
-      fontSize: '0.82rem',
+      borderRadius: 'var(--radius-md)',
+      fontSize: '0.8rem',
       color: isError ? 'var(--status-danger)' : 'var(--status-active)',
     }}>
-      {isError ? <AlertCircle size={16} style={{ marginTop: '1px', flexShrink: 0 }} /> : <CheckCircle2 size={16} style={{ marginTop: '1px', flexShrink: 0 }} />}
+      {isError ? <AlertCircle size={15} style={{ marginTop: '1px', flexShrink: 0 }} /> : <CheckCircle2 size={15} style={{ marginTop: '1px', flexShrink: 0 }} />}
       <span>{message}</span>
     </div>
   );
@@ -136,7 +131,7 @@ export function Login() {
     try {
       await login(loginEmail, loginPw);
     } catch (err) {
-      setError(err.message || 'Authentication failed. Verify your credentials.');
+      setError(err.message || 'Authentication failed. Please verify your email and password.');
     } finally {
       setLoading(false);
     }
@@ -146,12 +141,12 @@ export function Login() {
     e.preventDefault();
     setError(''); setLoading(true);
     if (regPw !== regConfirmPw) {
-      setError('Password confirmation does not match.'); setLoading(false); return;
+      setError('Passwords do not match.'); setLoading(false); return;
     }
     try {
       await register({ username: regUsername, email: regEmail, password: regPw, firstName: regFirstName, lastName: regLastName });
-      setSuccess('Your inscription has been recorded. You may now enter.');
-      setTimeout(() => { setTab('login'); setSuccess(''); }, 2500);
+      setSuccess('Account created successfully! You can now sign in.');
+      setTimeout(() => { setTab('login'); setSuccess(''); }, 2000);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -161,17 +156,11 @@ export function Login() {
 
   const handleForgot = async (e) => {
     e.preventDefault();
-    setSuccess('If this address is inscribed in the Codex, a recovery scroll has been dispatched.');
+    setSuccess('If this email address exists in our directory, a password reset link has been dispatched.');
   };
 
-  const fillImperator = () => { setLoginEmail('superadmin@authcore.io'); setLoginPw('AdminPassword123!'); };
-  const fillCivis     = () => { setLoginEmail('john.doe@example.com');    setLoginPw('Password123!');      };
-
-  const tabs = [
-    { id: 'login',    label: 'Ingressio',      sub: 'Login' },
-    { id: 'register', label: 'Nova Inscriptio', sub: 'Register' },
-    { id: 'forgot',   label: 'Recuperatio',     sub: 'Forgot Password' },
-  ];
+  const fillSuperAdmin = () => { setLoginEmail('superadmin@authcore.io'); setLoginPw('AdminPassword123!'); };
+  const fillUser       = () => { setLoginEmail('john.doe@example.com');    setLoginPw('Password123!');      };
 
   return (
     <div style={{
@@ -182,138 +171,101 @@ export function Login() {
       justifyContent: 'center',
       padding: '24px',
       position: 'relative',
-      overflow: 'hidden',
     }}>
-      {/* Background radial gradient */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse 60% 60% at 50% 20%, rgba(212,175,55,0.07) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
+      <div style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }}>
 
-      {/* Decorative column lines */}
-      {[15, 85].map(pct => (
-        <div key={pct} style={{
-          position: 'absolute', top: 0, bottom: 0,
-          left: `${pct}%`, width: '1px',
-          background: 'linear-gradient(180deg, transparent, rgba(212,175,55,0.08), transparent)',
-          pointerEvents: 'none',
-        }} />
-      ))}
-
-      <div style={{ width: '100%', maxWidth: '460px', position: 'relative', zIndex: 1 }}>
-
-        {/* Temple pediment header */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        {/* Clean Logo Header */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{
-            width: '64px', height: '64px', margin: '0 auto 16px',
-            background: 'linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.04))',
-            border: '1px solid rgba(212,175,55,0.4)',
-            borderRadius: '50%',
+            width: '48px', height: '48px', margin: '0 auto 12px',
+            background: 'var(--gold-faint)',
+            border: '1px solid var(--border-gold)',
+            borderRadius: '12px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'glowPulse 3s ease-in-out infinite',
           }}>
-            <AegisShieldIcon size={32} color="var(--gold-primary)" />
+            <AegisShieldIcon size={24} color="var(--gold-primary)" />
           </div>
           <h1 style={{
-            fontFamily: 'var(--font-cinzel)',
+            fontFamily: 'var(--font-heading)',
             fontSize: '1.4rem',
-            fontWeight: 800,
-            letterSpacing: '0.2em',
+            fontWeight: 700,
+            letterSpacing: '0.06em',
             color: 'var(--text-heading)',
             marginBottom: '4px',
-          }}>PORTA AUTENTICATIO</h1>
+          }}>AUTHCORE</h1>
           <p style={{
-            fontFamily: 'var(--font-cormorant)',
-            fontSize: '0.95rem',
-            fontStyle: 'italic',
+            fontSize: '0.85rem',
             color: 'var(--text-muted)',
-          }}>Gate of Imperial Admission — AuthCore IAM</p>
-
-          {/* Laurel hairline divider */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px',
-          }}>
-            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.3))' }} />
-            <LaurelWreathIcon size={16} color="var(--gold-aged)" />
-            <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(212,175,55,0.3), transparent)' }} />
-          </div>
+          }}>Enterprise Identity &amp; Access Management</p>
         </div>
 
-        {/* Main card */}
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid rgba(212,175,55,0.2)',
-          borderRadius: '12px',
-          boxShadow: '0 8px 48px rgba(0,0,0,0.8), 0 0 60px rgba(212,175,55,0.06)',
-          overflow: 'hidden',
-        }}>
+        {/* Clean Minimalist Card */}
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {/* Tab bar */}
           <div style={{
             display: 'flex',
-            borderBottom: '1px solid rgba(212,175,55,0.15)',
+            borderBottom: 'var(--border-subtle)',
           }}>
-            {tabs.map(t => (
+            {[
+              { id: 'login',    label: 'Sign In' },
+              { id: 'register', label: 'Create Account' },
+              { id: 'forgot',   label: 'Reset Password' },
+            ].map(t => (
               <button
                 key={t.id}
                 onClick={() => { setTab(t.id); resetState(); }}
                 style={{
-                  flex: 1, padding: '14px 4px', border: 'none', background: 'none',
+                  flex: 1, padding: '12px 6px', border: 'none', background: 'none',
                   borderBottom: `2px solid ${tab === t.id ? 'var(--gold-primary)' : 'transparent'}`,
-                  cursor: 'pointer', transition: 'all 0.2s',
+                  cursor: 'pointer', transition: 'all 0.15s ease',
+                  fontSize: '0.8rem',
+                  fontWeight: tab === t.id ? 600 : 400,
+                  color: tab === t.id ? 'var(--gold-bright)' : 'var(--text-muted)',
                   marginBottom: '-1px',
                 }}
               >
-                <div style={{
-                  fontFamily: 'var(--font-cinzel)', fontSize: '0.62rem',
-                  fontWeight: 600, letterSpacing: '0.1em',
-                  color: tab === t.id ? 'var(--gold-primary)' : 'var(--text-faint)',
-                  textTransform: 'uppercase',
-                }}>{t.label}</div>
-                <div style={{
-                  fontSize: '0.58rem', color: 'var(--text-faint)',
-                  marginTop: '1px',
-                }}>{t.sub}</div>
+                {t.label}
               </button>
             ))}
           </div>
 
           {/* Form body */}
-          <div style={{ padding: '28px' }}>
+          <div style={{ padding: '24px' }}>
 
-            {/* ── LOGIN ── */}
+            {/* ── SIGN IN ── */}
             {tab === 'login' && (
               <form onSubmit={handleLogin}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-                  <button type="button" onClick={fillImperator} className="btn btn-secondary btn-sm" style={{ flex: 1, fontSize: '0.58rem' }}>
-                    ⚡ Imperator
+                {/* 1-click test credentials */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
+                  <button type="button" onClick={fillSuperAdmin} className="btn btn-secondary btn-sm" style={{ flex: 1, fontSize: '0.72rem' }}>
+                    Super Admin
                   </button>
-                  <button type="button" onClick={fillCivis} className="btn btn-ghost btn-sm" style={{ flex: 1, fontSize: '0.58rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    👤 Civis
+                  <button type="button" onClick={fillUser} className="btn btn-ghost btn-sm" style={{ flex: 1, fontSize: '0.72rem', border: 'var(--border-subtle)' }}>
+                    Standard User
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <InputField label="Email Address" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="civis@authcore.io" autoComplete="email" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <InputField label="Email Address" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="name@authcore.io" autoComplete="email" />
                   <InputField label="Password" type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} placeholder="••••••••••••" showToggle autoComplete="current-password" />
                 </div>
 
                 <div style={{ textAlign: 'right', marginTop: '8px' }}>
                   <button type="button" onClick={() => { setTab('forgot'); resetState(); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gold-aged)', fontFamily: 'var(--font-cinzel)', fontSize: '0.6rem', letterSpacing: '0.08em' }}>
-                    Recuperatio →
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gold-aged)', fontSize: '0.75rem' }}>
+                    Forgot password?
                   </button>
                 </div>
 
-                <div style={{ marginTop: '16px' }}><Alert message={error} /></div>
+                <div style={{ marginTop: '14px' }}><Alert message={error} /></div>
 
                 <button
                   type="submit"
                   className="btn btn-primary"
                   disabled={loading || !loginEmail || !loginPw}
-                  style={{ width: '100%', marginTop: '20px', height: '44px' }}
+                  style={{ width: '100%', marginTop: '18px', height: '40px' }}
                 >
-                  {loading ? <><span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} /> Authenticating...</> : 'INGRESSIO — Enter'}
+                  {loading ? <><span className="spinner" style={{ width: '15px', height: '15px' }} /> Signing in...</> : 'Sign In'}
                 </button>
               </form>
             )}
@@ -321,13 +273,13 @@ export function Login() {
             {/* ── REGISTER ── */}
             {tab === 'register' && (
               <form onSubmit={handleRegister}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <InputField label="First Name" value={regFirstName} onChange={e => setRegFirstName(e.target.value)} placeholder="Marcus" autoComplete="given-name" />
-                    <InputField label="Last Name" value={regLastName} onChange={e => setRegLastName(e.target.value)} placeholder="Aurelius" autoComplete="family-name" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <InputField label="First Name" value={regFirstName} onChange={e => setRegFirstName(e.target.value)} placeholder="John" autoComplete="given-name" />
+                    <InputField label="Last Name" value={regLastName} onChange={e => setRegLastName(e.target.value)} placeholder="Doe" autoComplete="family-name" />
                   </div>
-                  <InputField label="Username" value={regUsername} onChange={e => setRegUsername(e.target.value)} placeholder="m.aurelius" autoComplete="username" />
-                  <InputField label="Email Address" type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="m.aurelius@senate.rome" autoComplete="email" />
+                  <InputField label="Username" value={regUsername} onChange={e => setRegUsername(e.target.value)} placeholder="johndoe" autoComplete="username" />
+                  <InputField label="Email Address" type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="john.doe@example.com" autoComplete="email" />
                   <div>
                     <InputField label="Password" type="password" value={regPw} onChange={e => setRegPw(e.target.value)} placeholder="••••••••••••" showToggle autoComplete="new-password" />
                     <StrengthMeter password={regPw} />
@@ -335,7 +287,7 @@ export function Login() {
                   <InputField label="Confirm Password" type="password" value={regConfirmPw} onChange={e => setRegConfirmPw(e.target.value)} placeholder="••••••••••••" showToggle autoComplete="new-password" />
                 </div>
 
-                <div style={{ marginTop: '14px' }}>
+                <div style={{ marginTop: '12px' }}>
                   <Alert message={error} />
                   <Alert message={success} type="success" />
                 </div>
@@ -344,35 +296,35 @@ export function Login() {
                   type="submit"
                   className="btn btn-primary"
                   disabled={loading || !regEmail || !regPw || !regUsername}
-                  style={{ width: '100%', marginTop: '20px', height: '44px' }}
+                  style={{ width: '100%', marginTop: '16px', height: '40px' }}
                 >
-                  {loading ? <><span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} /> Inscribing...</> : 'INSCRIBERE — Register'}
+                  {loading ? <><span className="spinner" style={{ width: '15px', height: '15px' }} /> Registering...</> : 'Create Account'}
                 </button>
               </form>
             )}
 
-            {/* ── FORGOT ── */}
+            {/* ── FORGOT PASSWORD ── */}
             {tab === 'forgot' && (
               <form onSubmit={handleForgot}>
-                <p style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.95rem' }}>
-                  Enter your email address to receive a recovery dispatch via the imperial post.
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                  Enter your registered email address to receive password reset instructions.
                 </p>
-                <InputField label="Registered Email" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="civis@authcore.io" autoComplete="email" />
+                <InputField label="Registered Email" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="user@authcore.io" autoComplete="email" />
 
-                <div style={{ marginTop: '14px' }}>
+                <div style={{ marginTop: '12px' }}>
                   <Alert message={success} type="success" />
                 </div>
 
                 <button
                   type="submit"
-                  className="btn btn-secondary"
+                  className="btn btn-primary"
                   disabled={loading || !forgotEmail}
-                  style={{ width: '100%', marginTop: '20px', height: '44px' }}
+                  style={{ width: '100%', marginTop: '16px', height: '40px' }}
                 >
-                  Dispatch Recovery Scroll
+                  Send Reset Link
                 </button>
                 <button type="button" onClick={() => setTab('login')} className="btn btn-ghost btn-sm" style={{ width: '100%', marginTop: '8px' }}>
-                  ← Return to Ingressio
+                  ← Back to Sign In
                 </button>
               </form>
             )}
@@ -380,17 +332,14 @@ export function Login() {
           </div>
         </div>
 
-        {/* Footer inscription */}
+        {/* Minimal Footer */}
         <p style={{
           textAlign: 'center',
-          fontFamily: 'var(--font-cinzel)',
-          fontSize: '0.55rem',
+          fontSize: '0.72rem',
           color: 'var(--text-faint)',
-          letterSpacing: '0.15em',
-          marginTop: '20px',
-          textTransform: 'uppercase',
+          marginTop: '16px',
         }}>
-          AuthCore Imperial IAM · Secured by the Aegis · MMXXVI
+          AuthCore Enterprise Security · NIST SP 800-63B Compliant
         </p>
       </div>
     </div>

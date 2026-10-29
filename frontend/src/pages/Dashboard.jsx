@@ -1,67 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usersApi, rolesApi, authApi } from '../api/client';
-import { 
-  AegisShieldIcon, 
-  LaurelWreathIcon, 
-  GreekColumnIcon, 
-  WaxSealIcon, 
-  ScrollIcon, 
-  RoleBadge,
-  LaurelDivider 
-} from '../components/ClassicalIcons';
+import { RoleBadge } from '../components/ClassicalIcons';
 import { 
   Users, 
   KeyRound, 
   ShieldCheck, 
   Activity, 
-  Clock, 
   ExternalLink, 
   Database, 
   UserPlus, 
   Shield, 
-  Key,
   Timer,
   Hash,
-  Fingerprint
+  Clock
 } from 'lucide-react';
 
-/* ─── Roman Date Formatter ─── */
-const ROMAN_MONTHS = [
-  'Ianuarii', 'Februarii', 'Martii', 'Aprilis', 'Maii', 'Iunii',
-  'Iulii', 'Augusti', 'Septembris', 'Octobris', 'Novembris', 'Decembris'
-];
-
-function toRomanNumerals(num) {
-  if (!num || num <= 0) return '';
-  const lookup = [
-    { value: 1000, sym: 'M' }, { value: 900, sym: 'CM' },
-    { value: 500,  sym: 'D' }, { value: 400, sym: 'CD' },
-    { value: 100,  sym: 'C' }, { value: 90,  sym: 'XC' },
-    { value: 50,   sym: 'L' }, { value: 40,  sym: 'XL' },
-    { value: 10,   sym: 'X' }, { value: 9,   sym: 'IX' },
-    { value: 5,    sym: 'V' }, { value: 4,   sym: 'IV' },
-    { value: 1,    sym: 'I' }
-  ];
-  let res = '';
-  for (const item of lookup) {
-    while (num >= item.value) {
-      res += item.sym;
-      num -= item.value;
-    }
-  }
-  return res;
-}
-
-function formatRomanDate(date) {
-  const d = new Date(date);
-  const day = toRomanNumerals(d.getDate());
-  const month = ROMAN_MONTHS[d.getMonth()];
-  const year = toRomanNumerals(d.getFullYear());
-  return `Die ${day} ${month} Anno ${year}`;
-}
-
-/* ─── JWT Parsing Utility ─── */
 function parseJwt(token) {
   if (!token) return null;
   try {
@@ -93,14 +47,12 @@ export function Dashboard({ setCurrentTab }) {
   const [loading, setLoading] = useState(true);
   const [tokenTimeLeft, setTokenTimeLeft] = useState(null);
 
-  // Retrieve raw token for Cryptographic Laurel Seal Inspector
   const rawToken = useMemo(() => {
     return localStorage.getItem('token') || localStorage.getItem('access_token') || '';
   }, []);
 
   const decodedJwt = useMemo(() => parseJwt(rawToken), [rawToken]);
 
-  // Live countdown to JWT expiration (15-minute rotation window)
   useEffect(() => {
     if (!decodedJwt?.exp) return;
     const interval = setInterval(() => {
@@ -153,7 +105,7 @@ export function Dashboard({ setCurrentTab }) {
           }
         }
       } catch (err) {
-        console.error('Failed to load forum telemetry:', err);
+        console.error('Failed to load dashboard:', err);
       } finally {
         setLoading(false);
       }
@@ -167,7 +119,6 @@ export function Dashboard({ setCurrentTab }) {
     : user?.roles?.includes('MODERATOR') ? 'MODERATOR'
     : 'USER';
 
-  // Format token countdown as MM:SS
   const formatCountdown = (seconds) => {
     if (seconds === null) return '15:00';
     const m = Math.floor(seconds / 60);
@@ -177,237 +128,172 @@ export function Dashboard({ setCurrentTab }) {
 
   return (
     <div className="fade-in">
-      {/* ─── FORUM PRINCIPALIS HERO BANNER ─── */}
+      {/* ─── WELCOME BANNER ─── */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(18,18,24,0.95) 100%)',
-        border: '1px solid rgba(212,175,55,0.3)',
+        background: 'var(--bg-card)',
+        border: 'var(--border-subtle)',
+        borderLeft: '3px solid var(--gold-primary)',
         borderRadius: 'var(--radius-lg)',
-        padding: '32px 36px',
-        marginBottom: '32px',
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: 'var(--shadow-elevated)'
+        padding: '24px 28px',
+        marginBottom: '28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '16px'
       }}>
-        {/* Subtle decorative background column watermark */}
-        <div style={{
-          position: 'absolute',
-          right: '24px',
-          top: '-10px',
-          opacity: 0.05,
-          pointerEvents: 'none'
-        }}>
-          <GreekColumnIcon size={180} color="var(--gold-primary)" />
+        <div>
+          <h1 style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: '1.4rem',
+            fontWeight: 700,
+            color: 'var(--text-heading)',
+            marginBottom: '4px'
+          }}>
+            Welcome, <span style={{ color: 'var(--gold-bright)' }}>{user?.firstName || user?.username}</span>
+          </h1>
+          <p style={{
+            fontSize: '0.85rem',
+            color: 'var(--text-muted)',
+            maxWidth: '560px'
+          }}>
+            AuthCore security engine is active. Monitor directory health, oversee access policies, and inspect active authentication tokens.
+          </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', position: 'relative', zIndex: 1 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <WaxSealIcon size={24} color="var(--gold-primary)" />
-              <div style={{
-                fontFamily: 'var(--font-cinzel)',
-                fontSize: '0.75rem',
-                letterSpacing: '0.2em',
-                color: 'var(--gold-aged)',
-                textTransform: 'uppercase'
-              }}>
-                Forum Principalis
-              </div>
-            </div>
-            
-            <h1 style={{
-              fontFamily: 'var(--font-cinzel)',
-              fontSize: '1.85rem',
-              fontWeight: 800,
-              color: 'var(--text-heading)',
-              letterSpacing: '0.06em',
-              marginBottom: '6px'
-            }}>
-              Ave, <span style={{ color: 'var(--gold-bright)' }}>{user?.firstName || user?.username}</span>
-            </h1>
-            
-            <p style={{
-              fontFamily: 'var(--font-cormorant)',
-              fontSize: '1.05rem',
-              fontStyle: 'italic',
-              color: 'var(--text-body)',
-              maxWidth: '640px'
-            }}>
-              The Aegis of AuthCore stands vigilant. Review citizen rosters, examine imperial dignities, and inspect real-time cryptographic decrees.
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            {isAdmin() && (
-              <button onClick={() => setCurrentTab('users')} className="btn btn-primary">
-                <UserPlus size={15} />
-                <span>Roster of Citizens</span>
-              </button>
-            )}
-            <a
-              href="/swagger-ui/index.html"
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-secondary"
-            >
-              <ExternalLink size={14} />
-              <span>API Codex</span>
-            </a>
-          </div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {isAdmin() && (
+            <button onClick={() => setCurrentTab('users')} className="btn btn-primary btn-sm">
+              <UserPlus size={14} />
+              <span>User Directory</span>
+            </button>
+          )}
+          <a
+            href="/swagger-ui/index.html"
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-secondary btn-sm"
+          >
+            <ExternalLink size={13} />
+            <span>API Docs</span>
+          </a>
         </div>
       </div>
 
-      {/* ─── FOUR MONUMENTAL TRAVERTINE TABLETS ─── */}
+      {/* ─── 4 MINIMAL METRIC CARDS ─── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-        gap: '20px',
-        marginBottom: '32px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '16px',
+        marginBottom: '28px'
       }}>
-        {/* Tablet I: Registered Citizens */}
+        {/* Metric 1 */}
         <div className="tablet">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <div className="roman-label">I. Civitas</div>
-              <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-heading)', marginTop: '2px' }}>
-                Total Citizens
-              </div>
-            </div>
-            <div style={{
-              padding: '8px',
-              borderRadius: '6px',
-              background: 'rgba(59, 130, 246, 0.1)',
-              color: '#60a5fa',
-              border: '1px solid rgba(59, 130, 246, 0.2)'
-            }}>
-              <Users size={18} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Registered Users</span>
+            <div style={{ padding: '6px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa' }}>
+              <Users size={16} />
             </div>
           </div>
-          <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '2rem', fontWeight: 800, color: 'var(--text-heading)' }}>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-heading)' }}>
             {loading ? '...' : stats.totalUsers}
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--status-active)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--status-active)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--status-active)' }} />
-            {stats.activeUsers} Active Dignitaries
+            {stats.activeUsers} Active accounts
           </div>
         </div>
 
-        {/* Tablet II: Cursus Honorum */}
+        {/* Metric 2 */}
         <div className="tablet">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <div className="roman-label">II. Honores</div>
-              <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-heading)', marginTop: '2px' }}>
-                Defined Dignities
-              </div>
-            </div>
-            <div style={{
-              padding: '8px',
-              borderRadius: '6px',
-              background: 'rgba(212, 175, 55, 0.1)',
-              color: 'var(--gold-bright)',
-              border: '1px solid rgba(212, 175, 55, 0.25)'
-            }}>
-              <KeyRound size={18} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Active Roles</span>
+            <div style={{ padding: '6px', borderRadius: '6px', background: 'var(--gold-faint)', color: 'var(--gold-bright)' }}>
+              <KeyRound size={16} />
             </div>
           </div>
-          <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '2rem', fontWeight: 800, color: 'var(--gold-primary)' }}>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--gold-primary)' }}>
             {loading ? '...' : stats.totalRoles}
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-            10 Granular Privileges Inscribed
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            10 Granular permissions
           </div>
         </div>
 
-        {/* Tablet III: Datastore Oracle */}
+        {/* Metric 3 */}
         <div className="tablet">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <div className="roman-label">III. Tabularium</div>
-              <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-heading)', marginTop: '2px' }}>
-                Primary Oracle
-              </div>
-            </div>
-            <div style={{
-              padding: '8px',
-              borderRadius: '6px',
-              background: 'rgba(16, 185, 129, 0.1)',
-              color: 'var(--status-active)',
-              border: '1px solid rgba(16, 185, 129, 0.25)'
-            }}>
-              <Database size={18} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Database Status</span>
+            <div style={{ padding: '6px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-active)' }}>
+              <Database size={16} />
             </div>
           </div>
-          <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1.6rem', fontWeight: 800, color: 'var(--status-active)' }}>
-            {stats.health?.database || 'STABILIS'}
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--status-active)' }}>
+            {stats.health?.database || 'HEALTHY'}
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-            Relational Persistence Engine
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            H2 / PostgreSQL Persistence
           </div>
         </div>
 
-        {/* Tablet IV: Aegis Securitas */}
+        {/* Metric 4 */}
         <div className="tablet">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <div className="roman-label">IV. Praesidium</div>
-              <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-heading)', marginTop: '2px' }}>
-                Cryptographic Aegis
-              </div>
-            </div>
-            <div style={{
-              padding: '8px',
-              borderRadius: '6px',
-              background: 'rgba(168, 85, 247, 0.1)',
-              color: '#c084fc',
-              border: '1px solid rgba(168, 85, 247, 0.25)'
-            }}>
-              <ShieldCheck size={18} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Security Baseline</span>
+            <div style={{ padding: '6px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.1)', color: '#c084fc' }}>
+              <ShieldCheck size={16} />
             </div>
           </div>
-          <div style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-heading)' }}>
+          <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-heading)' }}>
             NIST 800-63B
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-            Sliding-Window Rate Guards
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Rate limiter &amp; BCrypt-12
           </div>
         </div>
       </div>
 
-      {/* ─── CENTRAL SUITE: CRYPTOGRAPHIC LAUREL SEAL & CITIZEN IDENTITY ─── */}
+      {/* ─── PROFILE & JWT INSPECTOR SUITE ─── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(320px, 1fr) 2fr',
-        gap: '24px',
-        marginBottom: '32px'
+        gridTemplateColumns: 'minmax(280px, 1fr) 2fr',
+        gap: '20px',
+        marginBottom: '28px'
       }}>
-        {/* Left Card: Citizen Identity Stone Inscription */}
+        {/* User Identity Profile */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <AegisShieldIcon size={20} color="var(--gold-primary)" />
-              <h2 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-                Dignitas Identitatis
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Shield size={18} color="var(--gold-primary)" />
+              <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                Account Identity
               </h2>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '0.82rem' }}>
               <div>
-                <div className="roman-label">Nomen et Cognomen</div>
-                <div style={{ fontWeight: 600, color: 'var(--text-heading)', marginTop: '2px', fontSize: '0.95rem' }}>
-                  {user?.firstName || 'Dignitary'} {user?.lastName || user?.username}
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Full Name
+                </div>
+                <div style={{ fontWeight: 600, color: 'var(--text-heading)', marginTop: '2px' }}>
+                  {user?.firstName || 'User'} {user?.lastName || user?.username}
                 </div>
               </div>
 
               <div>
-                <div className="roman-label">Epistula Electronica</div>
-                <div style={{ color: 'var(--text-body)', marginTop: '2px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Email Address
+                </div>
+                <div style={{ color: 'var(--text-body)', marginTop: '2px', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
                   {user?.email}
                 </div>
               </div>
 
               <div>
-                <div className="roman-label">Tituli Dignitatis</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Assigned Roles
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
                   {user?.roles?.map(r => (
                     <RoleBadge key={r} role={r} />
                   ))}
@@ -415,26 +301,26 @@ export function Dashboard({ setCurrentTab }) {
               </div>
 
               <div>
-                <div className="roman-label">Status Civitatis</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Account Status
+                </div>
                 <div style={{ marginTop: '4px' }}>
                   <span className={`badge ${user?.status === 'ACTIVE' ? 'badge-active' : 'badge-danger'}`}>
-                    {user?.status === 'ACTIVE' ? 'Civis Stabilis' : user?.status || 'Interdictus'}
+                    {user?.status || 'ACTIVE'}
                   </span>
                 </div>
               </div>
 
-              <div style={{ paddingTop: '14px', borderTop: '1px solid rgba(212,175,55,0.1)' }}>
-                <div className="roman-label">Sigillum Unicum (UUID)</div>
+              <div style={{ paddingTop: '12px', borderTop: 'var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  User ID (UUID)
+                </div>
                 <div style={{
-                  color: 'var(--text-muted)',
+                  color: 'var(--text-faint)',
                   fontSize: '0.72rem',
                   fontFamily: 'var(--font-mono)',
                   marginTop: '4px',
-                  wordBreak: 'break-all',
-                  background: 'var(--bg-elevated)',
-                  padding: '6px 10px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-subtle)'
+                  wordBreak: 'break-all'
                 }}>
                   {user?.id}
                 </div>
@@ -442,177 +328,135 @@ export function Dashboard({ setCurrentTab }) {
             </div>
           </div>
 
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: 'var(--border-subtle)' }}>
             <button
               onClick={() => setCurrentTab('account')}
               className="btn btn-secondary btn-sm"
               style={{ width: '100%' }}
             >
-              Inspect Civitas Sanctuary →
+              Manage Account Settings →
             </button>
           </div>
         </div>
 
-        {/* Right Card: Feature B — The Cryptographic Laurel Seal Inspector */}
-        <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <WaxSealIcon size={20} color="var(--gold-primary)" />
-              <h2 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-                Sigillum Cryptographicum (JWT Seal)
+        {/* Clean JWT Access Token Inspector */}
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Timer size={18} color="var(--gold-primary)" />
+              <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+                Active Session Token (JWT)
               </h2>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="badge badge-imperator" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Timer size={12} />
-                <span>Rotation: {formatCountdown(tokenTimeLeft)}</span>
-              </span>
-            </div>
+            <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Clock size={12} />
+              <span>Rotation in: {formatCountdown(tokenTimeLeft)}</span>
+            </span>
           </div>
 
-          {/* Central Medallion Layout */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'auto 1fr',
-            gap: '24px',
-            alignItems: 'center',
             background: 'var(--bg-elevated)',
-            padding: '24px',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid rgba(212,175,55,0.25)',
-            marginBottom: '20px'
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-md)',
+            border: 'var(--border-subtle)',
+            marginBottom: '16px'
           }}>
-            {/* Animated Rotating Laurel Medallion */}
-            <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                border: '2px dashed var(--gold-primary)',
-                borderRadius: '50%',
-                animation: 'laurelSpin 24s linear infinite',
-                opacity: 0.6
-              }} />
-              <div style={{
-                width: '74px',
-                height: '74px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(212,175,55,0.25), rgba(15,15,20,0.95))',
-                border: '1px solid var(--gold-bright)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: 'var(--shadow-glow)'
-              }}>
-                <LaurelWreathIcon size={32} color="var(--gold-bright)" />
-                <span style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.55rem', fontWeight: 800, color: 'var(--gold-bright)', marginTop: '2px' }}>
-                  HMAC-512
-                </span>
-              </div>
-            </div>
-
-            {/* Medallion Telemetry Attributes */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '6px' }}>
-                <span className="roman-label">Algorithmus Signaturae:</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--gold-bright)', fontWeight: 600 }}>
-                  HMAC-SHA512 (256-bit entropy)
-                </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+              <div>
+                <span className="roman-label" style={{ fontSize: '0.68rem' }}>Algorithm</span>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--gold-bright)', fontWeight: 600, marginTop: '2px' }}>
+                  HMAC-SHA512
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '6px' }}>
-                <span className="roman-label">JTI (Token Identifier):</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-body)' }}>
-                  {decodedJwt?.jti ? `${decodedJwt.jti.substring(0, 16)}...` : '0x7c9a12e4f0d...'}
-                </span>
+              <div>
+                <span className="roman-label" style={{ fontSize: '0.68rem' }}>Token ID (JTI)</span>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-body)', marginTop: '2px' }}>
+                  {decodedJwt?.jti ? `${decodedJwt.jti.substring(0, 16)}...` : 'Active'}
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.08)', paddingBottom: '6px' }}>
-                <span className="roman-label">Tempus Emissum:</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {decodedJwt?.iat ? new Date(decodedJwt.iat * 1000).toLocaleTimeString() : 'N/A'} ({decodedJwt?.iat ? formatRomanDate(decodedJwt.iat * 1000) : ''})
-                </span>
+              <div>
+                <span className="roman-label" style={{ fontSize: '0.68rem' }}>Issued At</span>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  {decodedJwt?.iat ? new Date(decodedJwt.iat * 1000).toLocaleTimeString() : 'N/A'}
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="roman-label">Blacklist Status:</span>
-                <span className="badge badge-active" style={{ fontSize: '0.58rem' }}>
-                  Validus (Not Blacklisted)
-                </span>
+              <div>
+                <span className="roman-label" style={{ fontSize: '0.68rem' }}>Revocation Status</span>
+                <div style={{ marginTop: '2px' }}>
+                  <span className="badge badge-active" style={{ fontSize: '0.65rem' }}>
+                    Active &amp; Verified
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Raw Encoded JWT Ribbon */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span className="roman-label">Tessera Authentica (Enciphered Access Token):</span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-faint)' }}>15-Minute Expiry Window</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>Encoded Bearer Payload:</span>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-faint)' }}>15-minute sliding TTL</span>
             </div>
             <div style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: '0.7rem',
+              fontSize: '0.72rem',
               color: 'var(--gold-aged)',
               background: 'var(--bg-void)',
               padding: '10px 14px',
-              borderRadius: '6px',
-              border: '1px solid rgba(212,175,55,0.15)',
+              borderRadius: 'var(--radius-sm)',
+              border: 'var(--border-subtle)',
               wordBreak: 'break-all',
               lineHeight: 1.5,
-              maxHeight: '64px',
+              maxHeight: '60px',
               overflowY: 'auto'
             }}>
-              {rawToken ? rawToken : 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzdXBlcmFkbWluQGF1dGhjb3JlLmlvIiwiaWF0IjoxNzg0...'}
+              {rawToken || 'eyJhbGciOiJIUzUxMiJ9...'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── ACTA DIURNA: RECENT SECURITY AUDIT SCROLL ─── */}
+      {/* ─── RECENT AUDIT ACTIVITY TABLE ─── */}
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ScrollIcon size={20} color="var(--gold-primary)" />
-            <div>
-              <h2 style={{ fontFamily: 'var(--font-cinzel)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-                Acta Diurna — Security Chronicle
-              </h2>
-              <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '0.75rem', fontStyle: 'italic', color: 'var(--text-muted)' }}>
-                Latest security events recorded in the tamper-evident ledger (BR-25)
-              </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div>
+            <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+              Recent Security Audit Activity
+            </h2>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Live audit events recorded by the security logger
             </div>
           </div>
 
           {isAdmin() && (
             <button onClick={() => setCurrentTab('audit')} className="btn btn-secondary btn-sm">
-              Codex Annales Plenus →
+              View Full Logs →
             </button>
           )}
         </div>
 
         {recentLogs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-faint)' }}>
-            <ScrollIcon size={32} color="var(--text-faint)" className="mx-auto mb-2 opacity-40" />
-            <p style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: '0.95rem' }}>
-              No recent decrees or access records inscribe this session.
-            </p>
+          <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--text-faint)', fontSize: '0.85rem' }}>
+            No recent security events recorded for this session.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Eventum</th>
-                  <th>Locus IP</th>
-                  <th>Calendarium</th>
+                  <th>Action</th>
+                  <th>IP Address</th>
+                  <th>Timestamp</th>
                 </tr>
               </thead>
               <tbody>
                 {recentLogs.map((log) => (
                   <tr key={log.id}>
                     <td>
-                      <span className="badge badge-imperator" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}>
+                      <span className="badge badge-info" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>
                         {log.action}
                       </span>
                     </td>

@@ -8,16 +8,16 @@ import { RolesPage } from './pages/RolesPage';
 import { AuditPage } from './pages/AuditPage';
 import { HealthPage } from './pages/HealthPage';
 import { AccountPage } from './pages/AccountPage';
-import { AegisShieldIcon, LaurelWreathIcon, RoleBadge } from './components/ClassicalIcons';
+import { RoleBadge } from './components/ClassicalIcons';
 import { ExternalLink } from 'lucide-react';
 
 const TAB_TITLES = {
-  dashboard: 'I. Forum Principalis',
-  account:   'II. Civitas — My Identity',
-  users:     'III. Directorum Civium',
-  roles:     'IV. Cursus Honorum',
-  audit:     'V. Codex Annales',
-  health:    'VI. Templum Telemetriae'
+  dashboard: 'Dashboard',
+  account:   'My Account',
+  users:     'User Directory',
+  roles:     'Roles & Permissions',
+  audit:     'Security Audit Logs',
+  health:    'System Health & Infrastructure'
 };
 
 function AuthenticatedApp() {
@@ -34,24 +34,22 @@ function AuthenticatedApp() {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'var(--bg-void)',
-        gap: '20px'
+        gap: '16px'
       }}>
         <div style={{
-          width: '56px',
-          height: '56px',
+          width: '42px',
+          height: '42px',
           border: '3px solid rgba(212, 175, 55, 0.2)',
           borderTopColor: 'var(--gold-primary)',
           borderRadius: '50%',
           animation: 'spin 0.8s linear infinite'
         }} />
         <div style={{
-          fontFamily: 'var(--font-cinzel)',
           fontSize: '0.85rem',
-          letterSpacing: '0.15em',
-          color: 'var(--gold-primary)',
-          textTransform: 'uppercase'
+          fontWeight: 600,
+          color: 'var(--text-muted)'
         }}>
-          Consulting Imperial Oracle...
+          Authenticating with AuthCore...
         </div>
       </div>
     );
@@ -71,53 +69,52 @@ function AuthenticatedApp() {
       <Navbar currentTab={currentTab} setCurrentTab={setCurrentTab} />
       
       <main className="main-content">
-        {/* Imperial Top Header Bar */}
+        {/* Topbar Header */}
         <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.7rem', color: 'var(--gold-aged)', letterSpacing: '0.1em' }}>
-              AUTHCORE
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              AuthCore
             </span>
-            <span style={{ color: 'var(--gold-hairline)' }}>/</span>
+            <span style={{ color: 'var(--text-faint)' }}>/</span>
             <span style={{
-              fontFamily: 'var(--font-cinzel)',
               fontSize: '0.82rem',
-              fontWeight: 700,
-              color: 'var(--text-heading)',
-              letterSpacing: '0.08em'
+              fontWeight: 600,
+              color: 'var(--text-heading)'
             }}>
               {TAB_TITLES[currentTab] || currentTab}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <a
               href="/swagger-ui/index.html"
               target="_blank"
               rel="noreferrer"
               className="btn btn-secondary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <span>API Codex</span>
+              <span>Swagger API Docs</span>
               <ExternalLink size={12} />
             </a>
 
-            {/* Active Citizen Badge */}
+            {/* User status chip */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '6px 14px',
+              gap: '8px',
+              padding: '5px 12px',
               background: 'var(--bg-elevated)',
               borderRadius: '20px',
-              border: '1px solid rgba(212,175,55,0.2)'
+              border: 'var(--border-subtle)'
             }}>
               <div style={{
-                width: '8px',
-                height: '8px',
+                width: '7px',
+                height: '7px',
                 borderRadius: '50%',
                 background: 'var(--status-active)',
-                boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)'
+                boxShadow: '0 0 6px rgba(16, 185, 129, 0.6)'
               }} />
-              <span style={{ fontFamily: 'var(--font-cinzel)', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-heading)' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-heading)' }}>
                 {user.username}
               </span>
               <RoleBadge role={primaryRole} />
