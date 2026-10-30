@@ -14,6 +14,7 @@ import com.authcore.exception.AccountSuspendedException;
 import com.authcore.exception.DuplicateResourceException;
 import com.authcore.exception.InvalidCredentialsException;
 import com.authcore.exception.InvalidPasswordException;
+import com.authcore.exception.InvalidPasswordResetTokenException;
 import com.authcore.exception.InvalidTokenException;
 import com.authcore.exception.ResourceNotFoundException;
 import com.authcore.ratelimit.RateLimitService;
@@ -253,10 +254,10 @@ public class AuthService {
 
         String tokenHash = refreshTokenService.hashToken(request.token().trim());
         PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
-            .orElseThrow(() -> new InvalidTokenException("Invalid or expired password reset token"));
+            .orElseThrow(() -> new InvalidPasswordResetTokenException("Invalid or expired password reset token"));
 
         if (!resetToken.isValid()) {
-            throw new InvalidTokenException("Invalid or expired password reset token");
+            throw new InvalidPasswordResetTokenException("Invalid or expired password reset token");
         }
 
         User user = resetToken.getUser();

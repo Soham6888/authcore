@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { authApi } from '../api/client';
 import { AegisShieldIcon } from '../components/ClassicalIcons';
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -118,11 +119,17 @@ export function Login() {
   const [regPw, setRegPw] = useState('');
   const [regConfirmPw, setRegConfirmPw] = useState('');
 
-  // Forgot state
+  // Forgot & Reset state
+  const [forgotStep, setForgotStep] = useState(1);
   const [forgotEmail, setForgotEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [resetNewPw, setResetNewPw] = useState('');
+  const [resetConfirmPw, setResetConfirmPw] = useState('');
 
   const resetState = useCallback(() => {
-    setError(''); setSuccess('');
+    setError('');
+    setSuccess('');
+    setForgotStep(1);
   }, []);
 
   const handleLogin = async (e) => {
@@ -156,7 +163,50 @@ export function Login() {
 
   const handleForgot = async (e) => {
     e.preventDefault();
-    setSuccess('If this email address exists in our directory, a password reset link has been dispatched.');
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    try {
+      const res = await authApi.forgotPassword(forgotEmail);
+      const token = res.data?.resetToken;
+      if (token) {
+        setResetToken(token);
+        setSuccess('Reset token generated. Enter your new password below.');
+      } else {
+        setSuccess('If this email is registered, reset instructions have been sent.');
+      }
+      setForgotStep(2);
+    } catch (err) {
+      setError(err.message || 'Failed to dispatch password reset request.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    if (resetNewPw !== resetConfirmPw) {
+      setError('New passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await authApi.resetPassword(resetToken, resetNewPw);
+      setSuccess('Password has been reset successfully! Redirecting to sign in...');
+      setTimeout(() => {
+        setLoginEmail(forgotEmail);
+        setLoginPw('');
+        setTab('login');
+        setForgotStep(1);
+        resetState();
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'Failed to reset password. Please verify the reset token.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fillSuperAdmin = () => { setLoginEmail('superadmin@authcore.io'); setLoginPw('AdminPassword123!'); };
@@ -305,28 +355,62 @@ export function Login() {
 
             {/* ── FORGOT PASSWORD ── */}
             {tab === 'forgot' && (
-              <form onSubmit={handleForgot}>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                  Enter your registered email address to receive password reset instructions.
-                </p>
-                <InputField label="Registered Email" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="user@authcore.io" autoComplete="email" />
+              forgotStep === 1 ? (
+                <form onSubmit={handleForgot}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                    Enter your registered email address to receive password reset instructions.
+                  </p>
+                  <InputField label="Registered Email" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="user@authcore.io" autoComplete="email" />
 
-                <div style={{ marginTop: '12px' }}>
-                  <Alert message={success} type="success" />
-                </div>
+                  <div style={{ marginTop: '12px' }}>
+                    <Alert message={error} />
+                    <Alert message={success} type="success" />
+                  </div>
 
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading || !forgotEmail}
-                  style={{ width: '100%', marginTop: '16px', height: '40px' }}
-                >
-                  Send Reset Link
-                </button>
-                <button type="button" onClick={() => setTab('login')} className="btn btn-ghost btn-sm" style={{ width: '100%', marginTop: '8px' }}>
-                  ← Back to Sign In
-                </button>
-              </form>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={loading || !forgotEmail}
+                    style={{ width: '100%', marginTop: '16px', height: '40px' }}
+                  >
+                    {loading ? <><span className="spinner" style={{ width: '15px', height: '15px' }} /> Processing...</> : 'Send Reset Token'}
+                  </button>
+                  <button type="button" onClick={() => { setTab('login'); resetState(); }} className="btn btn-ghost btn-sm" style={{ width: '100%', marginTop: '8px' }}>
+                    ← Back to Sign In
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleResetPassword}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                    Enter your reset token and your new password.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <InputField label="Reset Token" value={resetToken} onChange={e => setResetToken(e.target.value)} placeholder="Enter or paste token..." />
+                    <div>
+                      <InputField label="New Password" type="password" value={resetNewPw} onChange={e => setResetNewPw(e.target.value)} placeholder="••••••••••••" showToggle autoComplete="new-password" />
+                      <StrengthMeter password={resetNewPw} />
+                    </div>
+                    <InputField label="Confirm New Password" type="password" value={resetConfirmPw} onChange={e => setResetConfirmPw(e.target.value)} placeholder="••••••••••••" showToggle autoComplete="new-password" />
+                  </div>
+
+                  <div style={{ marginTop: '12px' }}>
+                    <Alert message={error} />
+                    <Alert message={success} type="success" />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={loading || !resetToken || !resetNewPw || !resetConfirmPw}
+                    style={{ width: '100%', marginTop: '16px', height: '40px' }}
+                  >
+                    {loading ? <><span className="spinner" style={{ width: '15px', height: '15px' }} /> Setting Password...</> : 'Set New Password'}
+                  </button>
+                  <button type="button" onClick={() => setForgotStep(1)} className="btn btn-ghost btn-sm" style={{ width: '100%', marginTop: '8px' }}>
+                    ← Re-send Reset Token
+                  </button>
+                </form>
+              )
             )}
 
           </div>

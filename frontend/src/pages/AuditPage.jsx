@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { usersApi } from '../api/client';
+import { usersApi, auditApi } from '../api/client';
 import { 
   Search, 
   Clock, 
@@ -31,10 +31,20 @@ export function AuditPage() {
   const [actionFilter, setActionFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const isAdmin = user?.roles?.some(r => {
+    const name = typeof r === 'string' ? r : r?.name;
+    return name === 'ADMIN' || name === 'SUPER_ADMIN' || name === 'ROLE_ADMIN' || name === 'ROLE_SUPER_ADMIN';
+  });
+
   const loadAuditLogs = async () => {
     setLoading(true);
     try {
-      if (user?.id) {
+      if (isAdmin) {
+        const res = await auditApi.getAuditLogs({ page: 0, size: 100, action: actionFilter || undefined });
+        if (res.data?.content) {
+          setLogs(res.data.content);
+        }
+      } else if (user?.id) {
         const res = await usersApi.getUserAuditLogs(user.id, { page: 0, size: 50 });
         if (res.data?.content) {
           setLogs(res.data.content);
@@ -49,14 +59,15 @@ export function AuditPage() {
 
   useEffect(() => {
     loadAuditLogs();
-  }, [user]);
+  }, [user, actionFilter]);
 
   const filteredLogs = logs.filter(log => {
+    const rawDetails = log.metadata || log.details || '';
     const matchesAction = !actionFilter || log.action === actionFilter;
     const matchesSearch = !searchTerm || 
       log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.ipAddress?.includes(searchTerm) ||
-      log.details?.toLowerCase().includes(searchTerm.toLowerCase());
+      rawDetails.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesAction && matchesSearch;
   });
 
@@ -162,7 +173,7 @@ export function AuditPage() {
                         {log.userAgent || 'Web Browser'}
                       </td>
                       <td style={{ fontSize: '0.8rem', color: 'var(--text-body)', whiteSpace: 'nowrap' }}>
-                        {new Date(log.timestamp).toLocaleString()}
+                        {new Date(log.createdAt || log.timestamp).toLocaleString()}
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <button
@@ -218,7 +229,7 @@ export function AuditPage() {
                 <div>
                   <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Timestamp</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-body)', marginTop: '2px' }}>
-                    {new Date(selectedLog.timestamp).toISOString()}
+                    {new Date(selectedLog.createdAt || selectedLog.timestamp).toISOString()}
                   </div>
                 </div>
               </div>
@@ -239,11 +250,11 @@ export function AuditPage() {
                   maxHeight: '220px',
                   lineHeight: 1.5
                 }}>
-                  {selectedLog.details ? (() => {
+                  {selectedLog.metadata || selectedLog.details ? (() => {
                     try {
-                      return JSON.stringify(JSON.parse(selectedLog.details), null, 2);
+                      return JSON.stringify(JSON.parse(selectedLog.metadata || selectedLog.details), null, 2);
                     } catch {
-                      return selectedLog.details;
+                      return selectedLog.metadata || selectedLog.details;
                     }
                   })() : '// No additional payload parameters recorded'}
                 </pre>

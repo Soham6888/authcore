@@ -281,3 +281,14 @@ export const rolesApi = {
       method: 'DELETE'
     })
 };
+
+export const auditApi = {
+  getAuditLogs: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.page !== undefined) q.set('page', params.page);
+    if (params.size !== undefined) q.set('size', params.size);
+    if (params.action) q.set('action', params.action);
+    if (params.userId) q.set('userId', params.userId);
+    return apiRequest(`/audit-logs?${q.toString()}`);
+  }
+};

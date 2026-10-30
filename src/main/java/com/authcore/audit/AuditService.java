@@ -1,8 +1,12 @@
 package com.authcore.audit;
 
+import com.authcore.audit.dto.AuditLogResponse;
 import com.authcore.audit.entity.AuditLog;
 import com.authcore.audit.repository.AuditLogRepository;
+import com.authcore.common.PageResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -17,6 +21,12 @@ public class AuditService {
 
     public AuditService(AuditLogRepository auditLogRepository) {
         this.auditLogRepository = auditLogRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<AuditLogResponse> getAuditLogs(UUID userId, String action, Pageable pageable) {
+        Page<AuditLog> page = auditLogRepository.searchAuditLogs(userId, action, pageable);
+        return PageResponse.from(page.map(AuditLogResponse::from));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
