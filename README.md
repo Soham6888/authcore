@@ -10,8 +10,9 @@
 
 A production-grade, standalone **Authentication & User Management API** built to demonstrate mastery of:
 - **Database Architecture & Schema Design**: Relational normalization, indexing strategy, token rotation, password history, and immutable append-only audit logging.
-- **Testing Pyramid**: 69 automated tests spanning Unit (JUnit 5 + Mockito), Integration (Spring Boot Test with real PostgreSQL 16 & Redis 7), and End-to-End API verification with strict JaCoCo coverage enforcement (≥ 80% line coverage gate).
-- **DevOps & Containerization**: Multi-stage Docker builds (Temurin 21 alpine), Docker Compose local orchestration, and automated GitHub Actions CI pipelines with live service containers.
+- **Testing Pyramid**: 78 automated tests spanning Unit (JUnit 5 + Mockito), Integration (Spring Boot Test with PostgreSQL/H2 & Redis), and dedicated End-to-End API verification (all 8 PRD scenarios) with strict JaCoCo coverage enforcement (≥ 80% line coverage gate, currently 84%).
+- **Interactive Neoclassical Admin Portal**: React 19 single-page application styled with a minimalist dark aesthetic (`#0a0a0a` background, muted gold accents, clean English typography, and Lucide icons), embedded into the Spring Boot distribution bundle.
+- **DevOps & Containerization**: Multi-stage Docker builds (Node 20 + Temurin 21 alpine), Docker Compose local orchestration, and automated GitHub Actions CI pipelines with live service containers.
 
 ---
 
@@ -109,11 +110,39 @@ All API endpoints follow standard REST conventions under base path `/api/v1`:
 | `PATCH` | `/api/v1/roles/{id}` | Super Admin | Update role description or permissions |
 | `DELETE` | `/api/v1/roles/{id}` | Super Admin | Delete custom role (system roles protected from deletion) |
 
+### Audit Logging (`/api/v1/audit-logs`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/audit-logs` | Admin / Super Admin | System-wide immutable audit trail query with optional `userId` and `action` filters and pagination |
+
 ### System & Health (`/api/v1/health`)
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/v1/health` | Public | Basic probe checking PostgreSQL & Redis connectivity |
 | `GET` | `/api/v1/health/detailed` | Admin / Super Admin | Deep metrics including JVM heap memory, processors, and state |
+
+---
+
+## 🏛️ Frontend Admin Portal & UI Routes
+
+AuthCore embeds a modern, minimalist neoclassical dark UI served directly from the Spring Boot static bundle on port `8080`:
+
+| Route | Feature | Key Capabilities |
+|---|---|---|
+| `/login` | Authentication Portal | 1-click test credentials, user registration, 2-step password reset with NIST strength meter |
+| `/dashboard` | System Overview | Real-time counts of users, active sessions, security events, and rapid navigation |
+| `/users` | Directory Management | Paginated directory, keyword search, status filtering, session revocation, suspend/activate |
+| `/roles` | Access Control Matrix | Inspection of built-in roles (`SUPER_ADMIN`, `ADMIN`, `MODERATOR`, `USER`) and custom role editor |
+| `/audit` | Security Chronicle | Immutable audit ledger with event filtering, timestamps, client IPs, and JSON metadata viewer |
+| `/account` | Identity Center | Authenticated profile editing, password changes (enforcing last 5 history check), session revocation |
+| `/health` | Health & Maintenance | Real-time JVM memory stats, Redis/Postgres health indicators, and manual data retention triggers |
+
+### Default Pre-Seeded Development Credentials
+
+| Account | Email Address | Password | Assigned Role |
+|---|---|---|---|
+| **Super Administrator** | `superadmin@authcore.io` | `AdminPassword123!` | `SUPER_ADMIN` |
+| **Standard User** | `john.doe@example.com` | `Password123!` | `USER` |
 
 ---
 
